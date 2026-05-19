@@ -2,7 +2,7 @@
 
 Deploy Microsoft Sentinel onboarding assets with a workbook-driven discovery experience, a watchlist refresh pipeline, and operational visibility for installed connectors.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FWarfion%2FOnboarding-Assistant%2Fmaster%2Finfra%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FWarfion%2FOnboarding-Assistant%2Fmain%2Finfra%2Fmain.json)
 
 ## Overview
 

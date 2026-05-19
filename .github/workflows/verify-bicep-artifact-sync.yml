@@ -1,0 +1,33 @@
+name: Verify Bicep Artifact Sync
+
+on:
+  pull_request:
+    paths:
+      - infra/main.bicep
+      - infra/main.json
+  push:
+    branches:
+      - main
+    paths:
+      - infra/main.bicep
+      - infra/main.json
+
+jobs:
+  verify-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Build JSON from Bicep
+        run: |
+          az bicep build --file infra/main.bicep --outfile infra/main.generated.json
+
+      - name: Ensure generated JSON is committed
+        run: |
+          diff -u infra/main.json infra/main.generated.json
