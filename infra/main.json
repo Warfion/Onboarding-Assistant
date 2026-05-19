@@ -1,0 +1,524 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.42.1.51946",
+      "templateHash": "4978282217475253345"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "log-sentinel-001",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace with Sentinel"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Resource group location"
+      }
+    },
+    "uniqueSuffix": {
+      "type": "string",
+      "defaultValue": "[uniqueString(resourceGroup().id)]",
+      "metadata": {
+        "description": "Unique suffix for resource names"
+      }
+    },
+    "alertWebhookUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional Teams/webhook URL for failure alerts (leave empty to disable)"
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "functionAppHost": {
+          "defaultValue": "",
+          "type": "String"
+        },
+        "functionKey": {
+          "defaultValue": "",
+          "type": "SecureString"
+        },
+        "subscriptionId": {
+          "defaultValue": "",
+          "type": "String"
+        },
+        "resourceGroupName": {
+          "defaultValue": "",
+          "type": "String"
+        },
+        "workspaceName": {
+          "defaultValue": "",
+          "type": "String"
+        },
+        "alertWebhookUrl": {
+          "defaultValue": "",
+          "type": "String"
+        }
+      },
+      "triggers": {
+        "Recurrence": {
+          "type": "Recurrence",
+          "recurrence": {
+            "frequency": "Week",
+            "interval": 1,
+            "schedule": {
+              "weekDays": [
+                "Sunday"
+              ],
+              "hours": [
+                "2"
+              ],
+              "minutes": [
+                "0"
+              ]
+            },
+            "timeZone": "UTC"
+          }
+        }
+      },
+      "actions": {
+        "Get_Index_Markdown": {
+          "type": "Http",
+          "inputs": {
+            "method": "GET",
+            "uri": "https://raw.githubusercontent.com/oshezaf/sentinelninja/main/connectors-index.md"
+          },
+          "runAfter": {}
+        },
+        "Get_Latest_Commit": {
+          "type": "Http",
+          "inputs": {
+            "method": "GET",
+            "uri": "https://api.github.com/repos/oshezaf/sentinelninja/commits/main",
+            "headers": {
+              "Accept": "application/vnd.github.v3+json",
+              "User-Agent": "SentinelOnboardingAssistant"
+            }
+          },
+          "runAfter": {}
+        },
+        "Call_ParseConnectors": {
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "https://@{parameters('functionAppHost')}/api/ParseConnectors?code=@{parameters('functionKey')}",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "connectorsIndexMarkdown": "@{body('Get_Index_Markdown')}",
+              "repoZipUrl": "https://github.com/oshezaf/sentinelninja/archive/refs/heads/main.zip",
+              "sourceVersion": "@{body('Get_Latest_Commit')?['sha']}"
+            }
+          },
+          "runAfter": {
+            "Get_Index_Markdown": [
+              "Succeeded"
+            ],
+            "Get_Latest_Commit": [
+              "Succeeded"
+            ]
+          },
+          "runtimeConfiguration": {
+            "contentTransfer": {
+              "transferMode": "Chunked"
+            }
+          },
+          "limit": {
+            "timeout": "PT5M"
+          }
+        },
+        "Parse_Function_Response": {
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@body('Call_ParseConnectors')",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "csv": {
+                  "type": "string"
+                },
+                "stats": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "active": {
+                      "type": "integer"
+                    },
+                    "deprecated": {
+                      "type": "integer"
+                    },
+                    "sourceVersion": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Call_ParseConnectors": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Put_Con_Watchlist": {
+          "type": "Http",
+          "inputs": {
+            "method": "PUT",
+            "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con?api-version=2024-03-01",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "properties": {
+                "displayName": "Connector Catalog",
+                "provider": "Onboarding Assistant",
+                "source": "watchlist",
+                "description": "Full connector catalog parsed from sentinelninja GitHub repo",
+                "itemsSearchKey": "Connector Name",
+                "contentType": "Text/Csv",
+                "rawContent": "@{body('Parse_Function_Response')?['csv']}"
+              }
+            },
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://management.azure.com/"
+            }
+          },
+          "runAfter": {
+            "Parse_Function_Response": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Update_Meta_Success": {
+          "type": "Http",
+          "inputs": {
+            "method": "PUT",
+            "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con_Meta?api-version=2024-03-01",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "properties": {
+                "displayName": "Connector Catalog Metadata",
+                "provider": "Onboarding Assistant",
+                "source": "watchlist",
+                "itemsSearchKey": "RunId",
+                "contentType": "Text/Csv",
+                "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Success,@{body('Parse_Function_Response')?['stats']?['sourceVersion']},@{body('Parse_Function_Response')?['stats']?['active']},@{body('Parse_Function_Response')?['stats']?['deprecated']},@{body('Parse_Function_Response')?['stats']?['total']},,"
+              }
+            },
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://management.azure.com/"
+            }
+          },
+          "runAfter": {
+            "Put_Con_Watchlist": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Update_Meta_Failure": {
+          "type": "Http",
+          "inputs": {
+            "method": "PUT",
+            "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con_Meta?api-version=2024-03-01",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "properties": {
+                "displayName": "Connector Catalog Metadata",
+                "provider": "Onboarding Assistant",
+                "source": "watchlist",
+                "itemsSearchKey": "RunId",
+                "contentType": "Text/Csv",
+                "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Failed,,,,,ParseConnectors,@{if(equals(outputs('Call_ParseConnectors')?['statusCode'], null), 'Function unreachable', body('Call_ParseConnectors'))}"
+              }
+            },
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://management.azure.com/"
+            }
+          },
+          "runAfter": {
+            "Call_ParseConnectors": [
+              "Failed",
+              "TimedOut"
+            ],
+            "Parse_Function_Response": [
+              "Failed"
+            ],
+            "Put_Con_Watchlist": [
+              "Failed"
+            ]
+          }
+        },
+        "Send_Failure_Alert": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@parameters('alertWebhookUrl')",
+                    ""
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Post_To_Webhook": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('alertWebhookUrl')}",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "type": "message",
+                  "attachments": [
+                    {
+                      "contentType": "application/vnd.microsoft.card.adaptive",
+                      "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.4",
+                        "body": [
+                          {
+                            "type": "TextBlock",
+                            "size": "Medium",
+                            "weight": "Bolder",
+                            "text": "⚠️ Watchlist Refresh Failed",
+                            "style": "heading"
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "The Sentinel Onboarding Assistant watchlist refresh pipeline failed at **@{utcNow()}** UTC.",
+                            "wrap": true
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "Check the Con_Meta watchlist or Logic App run history for details.",
+                            "wrap": true,
+                            "isSubtle": true
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "runAfter": {
+            "Update_Meta_Failure": [
+              "Succeeded",
+              "Failed"
+            ]
+          }
+        }
+      }
+    },
+    "functionAppName": "[format('func-wl-parser-{0}', parameters('uniqueSuffix'))]",
+    "storageName": "[format('stwlparser{0}', parameters('uniqueSuffix'))]",
+    "hostingPlanName": "[format('plan-wl-parser-{0}', parameters('uniqueSuffix'))]",
+    "logicAppName": "la-watchlist-refresh",
+    "appInsightsName": "[format('ai-wl-parser-{0}', parameters('uniqueSuffix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('storageName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-12-01",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "reserved": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "[variables('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "powerShellVersion": "7.4",
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-05-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-05-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "powershell"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[variables('logicAppName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "state": "Enabled",
+        "definition": "[variables('$fxv#0')]",
+        "parameters": {
+          "functionAppHost": {
+            "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2023-12-01').defaultHostName]"
+          },
+          "functionKey": {
+            "value": "[listKeys(format('{0}/host/default', resourceId('Microsoft.Web/sites', variables('functionAppName'))), '2023-12-01').functionKeys.default]"
+          },
+          "subscriptionId": {
+            "value": "[subscription().subscriptionId]"
+          },
+          "resourceGroupName": {
+            "value": "[resourceGroup().name]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "alertWebhookUrl": {
+            "value": "[parameters('alertWebhookUrl')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+      "name": "[guid(resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), resourceId('Microsoft.Logic/workflows', variables('logicAppName')), 'ab8e14d6-4a74-4a29-9ba8-549422addade')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ab8e14d6-4a74-4a29-9ba8-549422addade')]",
+        "principalId": "[reference(resourceId('Microsoft.Logic/workflows', variables('logicAppName')), '2019-05-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', variables('logicAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.SecurityInsights/watchlists",
+      "apiVersion": "2024-03-01",
+      "scope": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+      "name": "Con_Meta",
+      "properties": {
+        "displayName": "Connector Catalog Metadata",
+        "description": "Tracks refresh status of the Con watchlist (1 row, upserted each run)",
+        "provider": "Onboarding Assistant",
+        "source": "watchlist",
+        "itemsSearchKey": "RunId",
+        "contentType": "Text/Csv",
+        "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\ninitial,2026-01-01T00:00:00Z,Pending,,0,0,0,,"
+      }
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[variables('functionAppName')]"
+    },
+    "functionAppHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2023-12-01').defaultHostName]"
+    },
+    "logicAppName": {
+      "type": "string",
+      "value": "[variables('logicAppName')]"
+    },
+    "logicAppPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Logic/workflows', variables('logicAppName')), '2019-05-01', 'full').identity.principalId]"
+    }
+  }
+}

@@ -1,0 +1,187 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.7 Chrome/138.0.7204.251 Electron/37.7.1 Safari/537.36" version="28.2.7">
+  <diagram name="Page-1" id="Ngfu5ULSKQD9jjUWzFSp">
+    <mxGraphModel dx="2404" dy="914" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="2400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- START -->
+        <mxCell id="nd-start" value="&lt;span style=&quot;font-weight: normal;&quot;&gt;Identify the Data Source&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1ba1e2;strokeColor=default;fontStyle=1;fontFamily=Helvetica;strokeWidth=2;shadow=1;textShadow=1;fontColor=#ffffff;arcSize=50;" parent="1" vertex="1">
+          <mxGeometry x="340" y="60" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-start-q1" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;shadow=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="400" y="120" as="sourcePoint" /><mxPoint x="400" y="180" as="targetPoint" /></mxGeometry>
+        </mxCell>
+
+        <!-- Q1 -->
+        <mxCell id="nd-q1" value="Listed in Microsoft Sentinel Content &lt;br&gt;Hub?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="330" y="180" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q1-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="435" y="290" as="sourcePoint" /><mxPoint x="590" y="380" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q1-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q1-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q1-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="360" y="290" as="sourcePoint" /><mxPoint x="220" y="440" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q1-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q1-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+
+        <!-- Q2 -->
+        <mxCell id="nd-q2" value="Built-in connector&lt;br&gt;available?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="520" y="380" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q2-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="630" y="490" as="sourcePoint" /><mxPoint x="730" y="570" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q2-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q2-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q2-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="555" y="490" as="sourcePoint" /><mxPoint x="395" y="600" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q2-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q2-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+
+        <!-- Evaluate -->
+        <mxCell id="nd-eval" value="&lt;span style=&quot;font-weight: 400;&quot;&gt;Evaluate&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-weight: 400;&quot;&gt;Capabilities&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1ba1e2;strokeColor=default;fontStyle=1;fontFamily=Helvetica;strokeWidth=2;shadow=1;textShadow=1;fontColor=#ffffff;arcSize=50;" parent="1" vertex="1">
+          <mxGeometry x="150" y="440" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-eval-q3" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="230" y="500" as="sourcePoint" /><mxPoint x="330" y="615" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="nd-builtin" value="Use built-in connector" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="660" y="570" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Q3 -->
+        <mxCell id="nd-q3" value="Does the &lt;br&gt;Data Source have &lt;br&gt;a REST API?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="290" y="600" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q3-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="325" y="710" as="sourcePoint" /><mxPoint x="175" y="810" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q3-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q3-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="-13" y="-14" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q3-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="395" y="710" as="sourcePoint" /><mxPoint x="510" y="810" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q3-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q3-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-26" as="offset" /></mxGeometry></mxCell>
+
+        <!-- Q4a: CCF -->
+        <mxCell id="nd-q4a" value="Is CCF suitable?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="100" y="810" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q4a-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="205" y="920" as="sourcePoint" /><mxPoint x="280" y="1000" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4a-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4a-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q4a-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="135" y="920" as="sourcePoint" /><mxPoint x="80" y="1000" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4a-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4a-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-ccf" value="Use CCF (Codeless&lt;br&gt;Connector Framework)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="220" y="1000" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="nd-logsapi" value="Use Logs Ingestion API&lt;br&gt;via Code" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="10" y="1000" width="150" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Q4b: Preprocessing -->
+        <mxCell id="nd-q4b" value="Preprocessing&lt;br&gt;needed?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="440" y="810" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q4b-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="545" y="920" as="sourcePoint" /><mxPoint x="650" y="1000" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4b-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4b-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q4b-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="475" y="920" as="sourcePoint" /><mxPoint x="440" y="1120" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4b-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4b-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="-15" y="-12" as="offset" /></mxGeometry></mxCell>
+
+        <!-- Q4c: K8s -->
+        <mxCell id="nd-q4c" value="Arc-enabled&lt;br&gt;K8s cluster&lt;br&gt;available?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="580" y="1000" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q4c-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="690" y="1090" as="sourcePoint" /><mxPoint x="770" y="1170" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4c-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4c-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q4c-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="615" y="1110" as="sourcePoint" /><mxPoint x="570" y="1170" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q4c-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q4c-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-pipeline" value="Use Azure Monitor&lt;br&gt;Pipeline (containerized)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="700" y="1170" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nd-logstash" value="Use Logstash" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="500" y="1170" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Q5: CEF -->
+        <mxCell id="nd-q5" value="Does it support &lt;br&gt;CEF ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="370" y="1120" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q5-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="475" y="1230" as="sourcePoint" /><mxPoint x="545" y="1330" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q5-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q5-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q5-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="405" y="1230" as="sourcePoint" /><mxPoint x="340" y="1330" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q5-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q5-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="-12" y="-15" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-cef" value="Use CEF via AMA" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="480" y="1330" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Q6: Syslog -->
+        <mxCell id="nd-q6" value="Does it support &lt;br&gt;Syslog ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="270" y="1330" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q6-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="375" y="1440" as="sourcePoint" /><mxPoint x="470" y="1540" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q6-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q6-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q6-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="305" y="1440" as="sourcePoint" /><mxPoint x="250" y="1540" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q6-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q6-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="-12" y="-15" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-syslog" value="Use Syslog via AMA" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="400" y="1540" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Q7: File export -->
+        <mxCell id="nd-q7" value="Exports files &lt;br&gt;in CSV or JSON?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="180" y="1540" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q7-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="285" y="1650" as="sourcePoint" /><mxPoint x="365" y="1750" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q7-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q7-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q7-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="215" y="1650" as="sourcePoint" /><mxPoint x="130" y="1750" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q7-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q7-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-customlogs" value="File Upload via AMA&lt;br&gt;(Custom logs DCR-based)" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="290" y="1750" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Q8: Webhooks -->
+        <mxCell id="nd-q8" value="Supports webhooks?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d80073;fontColor=#ffffff;strokeColor=default;rounded=1;arcSize=50;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="60" y="1750" width="140" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ed-q8-yes" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="165" y="1860" as="sourcePoint" /><mxPoint x="245" y="1960" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q8-yes" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q8-yes" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="1" y="-22" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="ed-q8-no" value="" style="endArrow=block;html=1;rounded=0;endFill=1;strokeWidth=3;strokeColor=#330000;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="95" y="1860" as="sourcePoint" /><mxPoint x="45" y="1960" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="lb-q8-no" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;labelBackgroundColor=none;" parent="ed-q8-no" vertex="1" connectable="0"><mxGeometry relative="1" as="geometry"><mxPoint x="2" y="-19" as="offset" /></mxGeometry></mxCell>
+        <mxCell id="nd-webhook" value="Use Logs Ingestion API&lt;br&gt;via Azure Function or Logic App" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="170" y="1960" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="nd-adhoc" value="Use Logs Ingestion API&lt;br&gt;via human-assisted upload" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#60a917;strokeColor=default;fontColor=#ffffff;shadow=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="-30" y="1960" width="150" height="70" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

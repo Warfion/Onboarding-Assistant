@@ -1,0 +1,250 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "functionAppHost": { "defaultValue": "", "type": "String" },
+    "functionKey": { "defaultValue": "", "type": "SecureString" },
+    "subscriptionId": { "defaultValue": "", "type": "String" },
+    "resourceGroupName": { "defaultValue": "", "type": "String" },
+    "workspaceName": { "defaultValue": "", "type": "String" },
+    "alertWebhookUrl": { "defaultValue": "", "type": "String" }
+  },
+  "triggers": {
+    "Recurrence": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Week",
+        "interval": 1,
+        "schedule": {
+          "weekDays": [ "Sunday" ],
+          "hours": [ "2" ],
+          "minutes": [ "0" ]
+        },
+        "timeZone": "UTC"
+      }
+    }
+  },
+  "actions": {
+    "Get_Index_Markdown": {
+      "type": "Http",
+      "inputs": {
+        "method": "GET",
+        "uri": "https://raw.githubusercontent.com/oshezaf/sentinelninja/main/Solutions%20Docs/connectors-index.md"
+      },
+      "runAfter": {}
+    },
+    "Get_Latest_Commit": {
+      "type": "Http",
+      "inputs": {
+        "method": "GET",
+        "uri": "https://api.github.com/repos/oshezaf/sentinelninja/commits/main",
+        "headers": {
+          "Accept": "application/vnd.github.v3+json",
+          "User-Agent": "SentinelOnboardingAssistant"
+        }
+      },
+      "runAfter": {}
+    },
+    "Call_ParseConnectors": {
+      "type": "Http",
+      "inputs": {
+        "method": "POST",
+        "uri": "https://@{parameters('functionAppHost')}/api/ParseConnectors?code=@{parameters('functionKey')}",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "connectorsIndexMarkdown": "@{body('Get_Index_Markdown')}",
+          "repoZipUrl": "https://github.com/oshezaf/sentinelninja/archive/refs/heads/main.zip",
+          "sourceVersion": "@{body('Get_Latest_Commit')?['sha']}"
+        }
+      },
+      "runAfter": {
+        "Get_Index_Markdown": [ "Succeeded" ],
+        "Get_Latest_Commit": [ "Succeeded" ]
+      },
+      "runtimeConfiguration": {
+        "contentTransfer": { "transferMode": "Chunked" }
+      },
+      "limit": { "timeout": "PT5M" }
+    },
+    "Parse_Function_Response": {
+      "type": "ParseJson",
+      "inputs": {
+        "content": "@body('Call_ParseConnectors')",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "csv": { "type": "string" },
+            "stats": {
+              "type": "object",
+              "properties": {
+                "total": { "type": "integer" },
+                "active": { "type": "integer" },
+                "deprecated": { "type": "integer" },
+                "sourceVersion": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "runAfter": {
+        "Call_ParseConnectors": [ "Succeeded" ]
+      }
+    },
+    "Delete_Con_Watchlist": {
+      "type": "Http",
+      "inputs": {
+        "method": "DELETE",
+        "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con?api-version=2024-03-01",
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://management.azure.com/"
+        }
+      },
+      "runAfter": {
+        "Parse_Function_Response": [ "Succeeded" ]
+      }
+    },
+    "Put_Con_Watchlist": {
+      "type": "Http",
+      "inputs": {
+        "method": "PUT",
+        "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con?api-version=2024-03-01",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "properties": {
+            "displayName": "Connector Catalog",
+            "provider": "Onboarding Assistant",
+            "source": "watchlist",
+            "description": "Full connector catalog parsed from sentinelninja GitHub repo",
+            "itemsSearchKey": "Connector Name",
+            "contentType": "Text/Csv",
+            "rawContent": "@{body('Parse_Function_Response')?['csv']}"
+          }
+        },
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://management.azure.com/"
+        }
+      },
+      "runAfter": {
+        "Delete_Con_Watchlist": [ "Succeeded", "Failed" ]
+      }
+    },
+    "Update_Meta_Success": {
+      "type": "Http",
+      "inputs": {
+        "method": "PUT",
+        "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con_Meta?api-version=2024-03-01",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "properties": {
+            "displayName": "Connector Catalog Metadata",
+            "provider": "Onboarding Assistant",
+            "source": "watchlist",
+            "itemsSearchKey": "RunId",
+            "contentType": "Text/Csv",
+            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Success,@{body('Parse_Function_Response')?['stats']?['sourceVersion']},@{body('Parse_Function_Response')?['stats']?['active']},@{body('Parse_Function_Response')?['stats']?['deprecated']},@{body('Parse_Function_Response')?['stats']?['total']},,"
+          }
+        },
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://management.azure.com/"
+        }
+      },
+      "runAfter": {
+        "Put_Con_Watchlist": [ "Succeeded" ]
+      }
+    },
+    "Update_Meta_Failure": {
+      "type": "Http",
+      "inputs": {
+        "method": "PUT",
+        "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con_Meta?api-version=2024-03-01",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "properties": {
+            "displayName": "Connector Catalog Metadata",
+            "provider": "Onboarding Assistant",
+            "source": "watchlist",
+            "itemsSearchKey": "RunId",
+            "contentType": "Text/Csv",
+            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Failed,,,,,ParseConnectors,@{if(equals(outputs('Call_ParseConnectors')?['statusCode'], null), 'Function unreachable', body('Call_ParseConnectors'))}"
+          }
+        },
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://management.azure.com/"
+        }
+      },
+      "runAfter": {
+        "Call_ParseConnectors": [ "Failed", "TimedOut" ],
+        "Parse_Function_Response": [ "Failed" ],
+        "Put_Con_Watchlist": [ "Failed" ]
+      }
+    },
+    "Send_Failure_Alert": {
+      "type": "If",
+      "expression": {
+        "and": [
+          { "not": { "equals": [ "@parameters('alertWebhookUrl')", "" ] } }
+        ]
+      },
+      "actions": {
+        "Post_To_Webhook": {
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "@{parameters('alertWebhookUrl')}",
+            "headers": { "Content-Type": "application/json" },
+            "body": {
+              "type": "message",
+              "attachments": [
+                {
+                  "contentType": "application/vnd.microsoft.card.adaptive",
+                  "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "body": [
+                      {
+                        "type": "TextBlock",
+                        "size": "Medium",
+                        "weight": "Bolder",
+                        "text": "⚠️ Watchlist Refresh Failed",
+                        "style": "heading"
+                      },
+                      {
+                        "type": "TextBlock",
+                        "text": "The Sentinel Onboarding Assistant watchlist refresh pipeline failed at **@{utcNow()}** UTC.",
+                        "wrap": true
+                      },
+                      {
+                        "type": "TextBlock",
+                        "text": "Check the Con_Meta watchlist or Logic App run history for details.",
+                        "wrap": true,
+                        "isSubtle": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "runAfter": {}
+        }
+      },
+      "else": { "actions": {} },
+      "runAfter": {
+        "Update_Meta_Failure": [ "Succeeded", "Failed" ]
+      }
+    }
+  }
+}
