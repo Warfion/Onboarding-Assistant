@@ -4,7 +4,7 @@
 // ============================================================
 
 @description('Name of the Log Analytics workspace with Sentinel')
-param workspaceName string = 'log-sentinel-001'
+param workspaceName string
 
 @description('Resource group location')
 param location string = resourceGroup().location

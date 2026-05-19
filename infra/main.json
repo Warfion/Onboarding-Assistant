@@ -5,13 +5,12 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "4978282217475253345"
+      "templateHash": "7445937655332744650"
     }
   },
   "parameters": {
     "workspaceName": {
       "type": "string",
-      "defaultValue": "log-sentinel-001",
       "metadata": {
         "description": "Name of the Log Analytics workspace with Sentinel"
       }
@@ -94,7 +93,7 @@
           "type": "Http",
           "inputs": {
             "method": "GET",
-            "uri": "https://raw.githubusercontent.com/oshezaf/sentinelninja/main/connectors-index.md"
+            "uri": "https://raw.githubusercontent.com/oshezaf/sentinelninja/main/Solutions%20Docs/connectors-index.md"
           },
           "runAfter": {}
         },
@@ -177,6 +176,22 @@
             ]
           }
         },
+        "Delete_Con_Watchlist": {
+          "type": "Http",
+          "inputs": {
+            "method": "DELETE",
+            "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.OperationalInsights/workspaces/@{parameters('workspaceName')}/providers/Microsoft.SecurityInsights/watchlists/Con?api-version=2024-03-01",
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://management.azure.com/"
+            }
+          },
+          "runAfter": {
+            "Parse_Function_Response": [
+              "Succeeded"
+            ]
+          }
+        },
         "Put_Con_Watchlist": {
           "type": "Http",
           "inputs": {
@@ -202,8 +217,9 @@
             }
           },
           "runAfter": {
-            "Parse_Function_Response": [
-              "Succeeded"
+            "Delete_Con_Watchlist": [
+              "Succeeded",
+              "Failed"
             ]
           }
         },
