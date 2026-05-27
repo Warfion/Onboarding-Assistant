@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "c:\\Users\\thomasbrndl\\.vscode\\extensions\\ms-security.ms-sentinel-2.1.0\\python"
+        "c:\\Users\\thomasbrndl\\.vscode\\extensions\\ms-security.ms-sentinel-2.1.0\\python",
+        "c:\\Users\\thomasbrndl\\.vscode\\extensions\\ms-security.ms-sentinel-2.2.0\\python"
     ],
     "azureFunctions.deploySubpath": "func-watchlist-parser",
     "azureFunctions.projectLanguage": "PowerShell",
