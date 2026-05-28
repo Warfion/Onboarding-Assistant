@@ -93,6 +93,27 @@
 
 ## Done
 
+### ✅ 13 — Workbook Refresh Targeting and Status Sync
+
+  - tags: [workbook, tab1, reliability, sync-docs]
+  - priority: high
+  - status: complete
+   ```md
+   Synchronized workbook refresh behavior and status rendering with recent runtime fixes.
+
+   DELIVERED:
+   ✅ Added deterministic default refresh targeting via workspace-derived subscription and resource group resolution.
+   ✅ Added optional cross-resource-group refresh path via workflow override picker.
+   ✅ Added workbook note clarifying default versus override behavior for operators.
+   ✅ Set workbook default tab to Available Data Connectors.
+   ✅ Updated catalog status behavior to render from latest Con_Meta row with explicit Success/Pending/Failed semantics.
+   ✅ Synchronized documentation in doc/docu.md and doc/architecture.md to reflect the implemented behavior.
+
+   INVENTORY DELTA:
+   - Added: none
+   - Removed: none
+   ```
+
 ### ✅ 12 — Inventory Sync for Deploy Workflow Artifact
 
   - tags: [documentation, governance, inventory]

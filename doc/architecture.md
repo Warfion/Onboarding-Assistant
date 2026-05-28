@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.1
-Updated: 2026-05-27
+Version: 2.2
+Updated: 2026-05-28
 
 ---
 
@@ -181,6 +181,16 @@ Workflow
   6) Emit failure signal (optional webhook)
 ```
 
+### 7.1 Manual Trigger Targeting Modes
+
+- Default targeting mode: derives subscription and resource group from the selected workspace, then triggers la-watchlist-refresh deterministically in that workspace scope.
+- Override targeting mode: uses an operator-selected Logic App workflow resource for cross-resource-group deployments where the refresh workflow is hosted outside the workspace resource group.
+
+Operator guidance:
+
+- Use default targeting for standard one-resource-group deployments.
+- Use override targeting only when workflow hosting is intentionally split from the workspace resource group.
+
 Security and RBAC:
 
 - Logic App uses system-assigned managed identity
@@ -199,7 +209,7 @@ Current resource model in rg-sentinel-001:
 - Storage Account and Application Insights for Function runtime
 - Watchlists: Con and Con_Meta
 - Infrastructure codified in infra/main.bicep with logic-app-definition.json loaded via loadJsonContent()
-- Function package artifact: infra/function-package.zip used by ZipDeploy-enabled infrastructure flow
+- Function package artifact: infra/function-package.zip mounted through WEBSITE_RUN_FROM_PACKAGE
 
 ---
 

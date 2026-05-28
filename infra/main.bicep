@@ -15,7 +15,7 @@ param uniqueSuffix string = uniqueString(resourceGroup().id)
 @description('Optional Teams/webhook URL for failure alerts (leave empty to disable)')
 param alertWebhookUrl string = ''
 
-@description('Public URL of the Function App zip package used by ZipDeploy')
+@description('Public URL of the Function App zip package used by WEBSITE_RUN_FROM_PACKAGE')
 param functionPackageUri string = 'https://raw.githubusercontent.com/Warfion/Onboarding-Assistant/main/infra/function-package.zip'
 
 @description('Deploy the Sentinel workbook resource from the checked-in workbook JSON')
@@ -28,6 +28,7 @@ var hostingPlanName = 'plan-wl-parser-${uniqueSuffix}'
 var logicAppName = 'la-watchlist-refresh'
 var appInsightsName = 'ai-wl-parser-${uniqueSuffix}'
 var workbookName = guid(workspace.id, 'onboarding-assistant-workbook')
+var refreshSharedSecret = guid(resourceGroup().id, functionAppName, 'refresh-shared-secret')
 
 // --- Existing workspace reference ---
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
@@ -106,23 +107,18 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
         }
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
+          value: functionPackageUri
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: appInsights.properties.InstrumentationKey
         }
+        {
+          name: 'REFRESH_SHARED_SECRET'
+          value: refreshSharedSecret
+        }
       ]
     }
-  }
-}
-
-// Deploy function code package in one-click deployments.
-resource functionZipDeploy 'Microsoft.Web/sites/extensions@2024-04-01' = {
-  name: 'ZipDeploy'
-  parent: functionApp
-  properties: {
-    packageUri: functionPackageUri
   }
 }
 
@@ -130,9 +126,6 @@ resource functionZipDeploy 'Microsoft.Web/sites/extensions@2024-04-01' = {
 resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   name: logicAppName
   location: location
-  dependsOn: [
-    functionZipDeploy
-  ]
   identity: {
     type: 'SystemAssigned'
   }
@@ -143,8 +136,8 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       functionAppHost: {
         value: functionApp.properties.defaultHostName
       }
-      functionKey: {
-        value: listKeys('${functionApp.id}/host/default', '2023-12-01').masterKey
+      refreshSharedSecret: {
+        value: refreshSharedSecret
       }
       subscriptionId: {
         value: subscription().subscriptionId

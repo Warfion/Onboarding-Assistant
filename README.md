@@ -67,7 +67,7 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 - `location`: Azure region for the deployed resources.
 - `uniqueSuffix`: Optional unique naming suffix derived from the resource group by default.
 - `alertWebhookUrl`: Optional webhook endpoint for failure notifications.
-- `functionPackageUri`: Public zip URL for Function App ZipDeploy (defaults to the package committed in this repo).
+- `functionPackageUri`: Public zip URL used by Function App `WEBSITE_RUN_FROM_PACKAGE`.
 - `deployWorkbook`: Set to `true` to deploy the workbook resource automatically.
 
 ### Resources deployed
@@ -80,7 +80,7 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 - System-assigned managed identity for the Logic App and Function App
 - Sentinel Contributor role assignment for the Logic App on the target workspace
 - `Con_Meta` watchlist for refresh tracking
-- ZipDeploy of Function App code package from `infra/function-package.zip`
+- Function App package mount via `WEBSITE_RUN_FROM_PACKAGE` from `infra/function-package.zip`
 - Shared workbook resource from [Onboarding Assistant.workbook](Onboarding%20Assistant.workbook)
 
 ## Deployment Steps

@@ -12,6 +12,34 @@ param($Request, $TriggerMetadata)
 
 $ErrorActionPreference = 'Stop'
 
+# --- Lightweight shared-secret gate for Logic App calls ---
+$expectedSharedSecret = [Environment]::GetEnvironmentVariable('REFRESH_SHARED_SECRET')
+if (-not [string]::IsNullOrWhiteSpace($expectedSharedSecret)) {
+    $providedSharedSecret = $null
+    if ($Request -and $Request.Headers) {
+        foreach ($headerName in $Request.Headers.Keys) {
+            if ($headerName -ieq 'x-refresh-secret') {
+                $headerValue = $Request.Headers[$headerName]
+                if ($headerValue -is [System.Array]) {
+                    $providedSharedSecret = [string]($headerValue[0])
+                } else {
+                    $providedSharedSecret = [string]$headerValue
+                }
+                break
+            }
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($providedSharedSecret) -or $providedSharedSecret -ne $expectedSharedSecret) {
+        Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+            StatusCode = [HttpStatusCode]::Unauthorized
+            Headers    = @{ 'Content-Type' = 'application/json' }
+            Body       = @{ error = 'Unauthorized' }
+        })
+        return
+    }
+}
+
 # --- Structured logging helper ---
 function Write-Trace {
     param(

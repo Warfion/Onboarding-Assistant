@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "functionAppHost": { "defaultValue": "", "type": "String" },
-    "functionKey": { "defaultValue": "", "type": "SecureString" },
+    "refreshSharedSecret": { "defaultValue": "", "type": "SecureString" },
     "subscriptionId": { "defaultValue": "", "type": "String" },
     "resourceGroupName": { "defaultValue": "", "type": "String" },
     "workspaceName": { "defaultValue": "", "type": "String" },
@@ -49,9 +49,10 @@
       "type": "Http",
       "inputs": {
         "method": "POST",
-        "uri": "https://@{parameters('functionAppHost')}/api/ParseConnectors?code=@{parameters('functionKey')}",
+        "uri": "https://@{parameters('functionAppHost')}/api/ParseConnectors",
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "x-refresh-secret": "@{parameters('refreshSharedSecret')}"
         },
         "body": {
           "connectorsIndexMarkdown": "@{body('Get_Index_Markdown')}",

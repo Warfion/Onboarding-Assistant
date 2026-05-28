@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 1.9
-Last Updated: 2026-05-27
+Version: 2.0
+Last Updated: 2026-05-28
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -45,9 +45,12 @@ The workbook has three tabs:
 | Subscription | Dropdown | Subscription picker using display names |
 | Workspace | Resource Picker | Workspace picker scoped to SecurityInsights-enabled workspaces |
 | WorkspaceID | Hidden | Workspace customerId lookup for selected workspace |
+| WorkspaceSubscriptionId | Hidden | Resolved subscription ID for the selected workspace |
+| WorkspaceResourceGroup | Hidden | Resolved resource group for the selected workspace |
 | Help | Toggle | Shows and hides explanatory info panels |
 | Tab | Hidden, Global | 1 = Available Data Connectors, 2 = Alternative Ingestion Methods, 3 = Installed Connectors and Coverage |
 | SelectedConnector | Dropdown value | Connector chosen in Tab 1 |
+| RefreshWorkflowOverride | Resource Picker | Optional Logic App workflow override for cross-resource-group manual refresh |
 | SelectedSubdomain | Exported value | Subdomain selected from Tab 3 coverage table |
 | StatusFilter | Dropdown | Tab 3 detail filter: All, Installed, Not installed |
 
@@ -65,7 +68,8 @@ Main behaviors:
 - Single-row details table and description card are filtered by exact connector name
 - Copilot nudge appears only when a connector is selected
 - Catalog refresh status card reads Con_Meta
-- Refresh button triggers Logic App recurrence endpoint via ARM action
+- Default refresh button triggers Logic App recurrence endpoint via ARM action using workspace-derived subscription and resource group parameters
+- Alternate refresh button supports explicit cross-resource-group target selection using a workflow override picker
 - Publisher and method pie charts summarize active catalog state
 - Full grid supports a status-based filter (All, First Party, Third Party, Deprecated)
 
@@ -204,6 +208,8 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Tab 2 visibility chain hardening | Complete |
 | Tab 3 maturity and recommendations model | Complete |
 | Tab 3 domain-subdomain drilldown | Complete |
+| Tab 1 refresh targeting and override flow | Complete |
+| Tab 1 catalog status rendering from latest Con_Meta row | Complete |
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
 | Function test suite | 33 passing |
@@ -248,7 +254,7 @@ Current workspace files:
 | func-watchlist-parser/ParseConnectors/function.json | Function trigger bindings |
 | func-watchlist-parser/ParseConnectors/run.ps1 | Parser implementation |
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
-| infra/function-package.zip | Function ZipDeploy package artifact |
+| infra/function-package.zip | Function package artifact used by WEBSITE_RUN_FROM_PACKAGE |
 | infra/logic-app-definition.json | Logic App workflow definition |
 | infra/main.bicep | Infrastructure as code source |
 | infra/main.json | Compiled ARM template |
