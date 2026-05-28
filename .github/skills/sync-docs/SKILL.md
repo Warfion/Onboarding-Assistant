@@ -36,6 +36,11 @@ copilot-instructions.md  ←→  doc/architecture.md
 - **Decision tree changes** (Q1–Q8 questions, outcomes, visibility logic) in the workbook or `architecture.md` §4–§5 must flag `decision-tree.drawio` for manual update
 - **Topology changes** (new resources, changed data flow) in `architecture.md` §1/§6/§8 must flag `decision-tree.drawio` for manual update
 
+### Canonical Section Map
+
+- `doc/docu.md`: §9 = Status and Known Gaps, §10 = File Inventory
+- `doc/architecture.md`: §9 must explicitly include schema consistency reference aligned to `doc/docu.md` §5 and code
+
 ## Procedure
 
 ### Mode A: Propagate a specific change
@@ -65,10 +70,14 @@ When the user describes a change (e.g. "I added Pester tests and refactored run.
    - Schema mismatches between `docu.md` §5 and actual watchlist/workbook definitions
    - Decision tree logic in `architecture.md` §4–§5 that differs from the workbook implementation
    - Topology in `architecture.md` §8 that doesn't match deployed infrastructure
-3. **Report findings** as a numbered list with proposed fixes
+3. **Validate file inventory against actual workspace files** (not only documentation):
+   - Prefer: `rg --files`
+   - Windows fallback: `Get-ChildItem -Recurse -File`
+   - Include governance artifacts under `.github/workflows/` in inventory checks
+4. **Report findings** as a numbered list with proposed fixes
 4. For `decision-tree.drawio` drift: describe what diagrams need manual updating
 5. **Wait for user** to select which fixes to apply
-6. **Apply selected fixes**
+6. **Apply selected fixes immediately** after user selection (no extra confirmation step)
 
 ### Mode C: New improvement proposal
 
@@ -88,5 +97,7 @@ When the user describes a new improvement idea:
 - **Doc sections:** `docu.md` and `architecture.md` both use §1–§10. Don't renumber. Add subsections if needed.
 - **Show before writing:** Always present proposed changes and wait for confirmation before editing files.
 - **File Inventory:** If a new file is added to the project, update `docu.md` §10 (File Inventory) and `architecture.md` §8 (Deployment Topology) if it's an infrastructure or deployment file.
+- **Governance artifacts:** Include CI and policy files (for example, `.github/workflows/*`) in `docu.md` §10 inventory when present.
 - **Schema consistency:** When watchlist columns or workbook elements change, ensure `docu.md` §5, `architecture.md` §9, and actual code all agree.
+- **Done item precision:** When a sync task updates inventory, the related Done item in `doc/kanban.md` must list explicit add/remove deltas (which files were added to or removed from inventory).
 - **Draw.io is read-only to the agent:** Never attempt to edit `decision-tree.drawio` directly. Only flag it for manual update and describe what needs to change.

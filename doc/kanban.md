@@ -93,6 +93,23 @@
 
 ## Done
 
+### ✅ 12 — Inventory Sync for Deploy Workflow Artifact
+
+  - tags: [documentation, governance, inventory]
+  - priority: high
+  - status: complete
+   ```md
+   Synchronized documentation inventory after CI/workflow maintenance changes.
+
+   DELIVERED:
+   ✅ Updated doc/docu.md §10 File Inventory with the missing deployment artifact.
+   ✅ Updated doc/architecture.md §8 Deployment Topology to reference the Function package artifact.
+
+   INVENTORY DELTA:
+   - Added: infra/function-package.zip
+   - Removed: none
+   ```
+
 ### ✅ 11 — Documentation Sync Audit + Apply
 
   - tags: [documentation, governance, sync-docs]

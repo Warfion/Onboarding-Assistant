@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.0
-Updated: 2026-05-19
+Version: 2.1
+Updated: 2026-05-27
 
 ---
 
@@ -199,10 +199,30 @@ Current resource model in rg-sentinel-001:
 - Storage Account and Application Insights for Function runtime
 - Watchlists: Con and Con_Meta
 - Infrastructure codified in infra/main.bicep with logic-app-definition.json loaded via loadJsonContent()
+- Function package artifact: infra/function-package.zip used by ZipDeploy-enabled infrastructure flow
 
 ---
 
-## 9. Draw.io Alignment Note
+## 9. Schema Consistency and Draw.io Alignment
+
+### 9.1 Schema Consistency Reference
+
+The workbook and parser contract is the 12-column watchlist schema below and must remain consistent with doc/docu.md section 5 and the parser output contract.
+
+- Connector Name
+- Connector Description
+- Vendor
+- Method
+- Table Count
+- Solution
+- Status
+- Flags
+- Source Version
+- Domain
+- Subdomain
+- Connector ID
+
+### 9.2 Draw.io Alignment Note
 
 The decision diagram in doc/decision-tree.drawio should remain functionally aligned with section 4. Manual refresh can be performed when visual labels or notation style need parity with workbook wording.
 

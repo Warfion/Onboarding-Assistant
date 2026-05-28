@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 1.8
-Last Updated: 2026-05-19
+Version: 1.9
+Last Updated: 2026-05-27
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -211,22 +211,31 @@ This keeps workbook JSON maintainable and traceable during future edits.
 
 ---
 
-## 9. File Inventory
+## 9. Known Gaps
+
+| Gap | Impact | Tracking |
+|---|---|---|
+| Public GitHub packaging and one-click deploy documentation is not finalized | Slows reproducible onboarding for external teams | Kanban item #7 |
+
+---
+
+## 10. File Inventory
 
 Current workspace files:
 
 | File | Purpose |
 |---|---|
+| LICENSE | Project license |
 | Onboarding Assistant.workbook | Workbook definition |
-| deploy.zip | Function deployment package |
+| README.md | Project overview and deployment guidance |
 | .github/copilot-instructions.md | Project coding and sync rules |
 | .github/skills/sync-docs/SKILL.md | Documentation sync workflow |
+| .github/workflows/verify-bicep-artifact-sync.yml | CI check for Bicep/ARM artifact sync |
 | .vscode/extensions.json | Recommended extensions |
 | .vscode/launch.json | Debug configuration |
 | .vscode/mcp.json | MCP configuration |
 | .vscode/settings.json | Workspace settings |
 | .vscode/tasks.json | Task definitions |
-| doc/AllConnectors.csv | Legacy seed data snapshot |
 | doc/architecture.md | Architecture and flow documentation |
 | doc/decision-tree.drawio | Visual decision tree diagram |
 | doc/docu.md | Documentation reference |
@@ -239,6 +248,7 @@ Current workspace files:
 | func-watchlist-parser/ParseConnectors/function.json | Function trigger bindings |
 | func-watchlist-parser/ParseConnectors/run.ps1 | Parser implementation |
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
+| infra/function-package.zip | Function ZipDeploy package artifact |
 | infra/logic-app-definition.json | Logic App workflow definition |
 | infra/main.bicep | Infrastructure as code source |
 | infra/main.json | Compiled ARM template |
