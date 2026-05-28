@@ -337,7 +337,7 @@
                         "linkLabel": "🔄 Refresh Connector Catalog",
                         "style": "primary",
                         "armActionContext": {
-                          "path": "/subscriptions/{Workspace:subscriptionId}/resourceGroups/{Workspace:resourcegroup}/providers/Microsoft.Logic/workflows/la-watchlist-refresh/triggers/Recurrence/run?api-version=2016-06-01",
+                          "path": "/subscriptions/{Workspace:subscription}/resourceGroups/{Workspace:resourceGroup}/providers/Microsoft.Logic/workflows/la-watchlist-refresh/triggers/Recurrence/run?api-version=2016-06-01",
                           "httpMethod": "POST",
                           "title": "Refresh Connector Catalog",
                           "description": "This will trigger the Logic App to refresh the connector watchlist from GitHub. The process takes about 1–2 minutes. Reload the workbook afterward to see updated data.",
