@@ -130,6 +130,9 @@ resource functionZipDeploy 'Microsoft.Web/sites/extensions@2024-04-01' = {
 resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   name: logicAppName
   location: location
+  dependsOn: [
+    functionZipDeploy
+  ]
   identity: {
     type: 'SystemAssigned'
   }
@@ -141,7 +144,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         value: functionApp.properties.defaultHostName
       }
       functionKey: {
-        value: listKeys('${functionApp.id}/host/default', '2023-12-01').functionKeys.default
+        value: listKeys('${functionApp.id}/host/default', '2023-12-01').masterKey
       }
       subscriptionId: {
         value: subscription().subscriptionId
