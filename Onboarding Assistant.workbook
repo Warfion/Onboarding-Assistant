@@ -90,6 +90,32 @@
             "resourceType": "microsoft.resourcegraph/resources"
           },
           {
+            "id": "6bb39edf-2812-4cb2-8274-36d3e34e5ac1",
+            "version": "KqlParameterItem/1.0",
+            "name": "WorkspaceSubscriptionId",
+            "type": 1,
+            "query": "resources\r\n| where type =~ 'microsoft.operationalinsights/workspaces'\r\n| where tolower(id) == tolower('{Workspace}')\r\n| project WorkspaceSubscriptionId = subscriptionId",
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 259200000
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "36bc67cb-aef9-4d6f-b830-6642326f3712",
+            "version": "KqlParameterItem/1.0",
+            "name": "WorkspaceResourceGroup",
+            "type": 1,
+            "query": "resources\r\n| where type =~ 'microsoft.operationalinsights/workspaces'\r\n| where tolower(id) == tolower('{Workspace}')\r\n| project WorkspaceResourceGroup = resourceGroup",
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 259200000
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
             "id": "0fc73ced-c849-4b09-9dfc-805ecb089433",
             "version": "KqlParameterItem/1.0",
             "name": "Help",
@@ -116,7 +142,7 @@
             "timeContext": {
               "durationMs": 259200000
             },
-            "value": "3"
+            "value": "1"
           }
         ],
         "style": "above",
@@ -312,7 +338,7 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "_GetWatchlist('Con_Meta') | project Status = iff(Result == 'Success', strcat('✅ Updated ', format_datetime(todatetime(Timestamp), 'yyyy-MM-dd'), ' (', ActiveCount, ' active)'), strcat('⚠️ Last refresh: ', Result, ' at ', Timestamp))",
+                    "query": "_GetWatchlist('Con_Meta')\r\n| extend RefreshTime = todatetime(Timestamp)\r\n| summarize arg_max(RefreshTime, *)\r\n| project Status = case(\r\n    Result == 'Success', strcat('✅ Updated ', format_datetime(RefreshTime, 'yyyy-MM-dd HH:mm:ss'), ' (', tostring(ActiveCount), ' active)'),\r\n    Result == 'Pending', strcat('⏳ Not refreshed yet (seeded ', format_datetime(RefreshTime, 'yyyy-MM-dd HH:mm:ss'), ')'),\r\n    Result == 'Failed', strcat('❌ Last refresh failed at ', format_datetime(RefreshTime, 'yyyy-MM-dd HH:mm:ss'), iff(isnotempty(tostring(FailureStage)), strcat(' [', tostring(FailureStage), ']'), ''), iff(isnotempty(tostring(ErrorSummary)), strcat(' - ', tostring(ErrorSummary)), '')),\r\n    strcat('⚠️ Last refresh: ', tostring(Result), ' at ', format_datetime(RefreshTime, 'yyyy-MM-dd HH:mm:ss'))\r\n)",
                     "size": 4,
                     "title": "Connector Catalog Status",
                     "timeContext": {
@@ -337,7 +363,7 @@
                         "linkLabel": "🔄 Refresh Connector Catalog",
                         "style": "primary",
                         "armActionContext": {
-                          "path": "/subscriptions/{Workspace:subscription}/resourceGroups/{Workspace:resourceGroup}/providers/Microsoft.Logic/workflows/la-watchlist-refresh/triggers/Recurrence/run?api-version=2016-06-01",
+                          "path": "/subscriptions/{WorkspaceSubscriptionId}/resourceGroups/{WorkspaceResourceGroup}/providers/Microsoft.Logic/workflows/la-watchlist-refresh/triggers/Recurrence/run?api-version=2016-06-01",
                           "httpMethod": "POST",
                           "title": "Refresh Connector Catalog",
                           "description": "This will trigger the Logic App to refresh the connector watchlist from GitHub. The process takes about 1–2 minutes. Reload the workbook afterward to see updated data.",
@@ -349,6 +375,71 @@
                   },
                   "customWidth": "30",
                   "name": "link-RefreshCatalog"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "ℹ️ Default behavior: **Refresh Connector Catalog** triggers the Logic App in the selected workspace's resource group.\r\n\r\nAlternative: if your Logic App is hosted in a different resource group, choose it below and use **Refresh (Alternative Target)**.",
+                    "style": "info"
+                  },
+                  "name": "text-RefreshBehaviorNote"
+                },
+                {
+                  "type": 9,
+                  "content": {
+                    "version": "KqlParameterItem/1.0",
+                    "parameters": [
+                      {
+                        "id": "9abf8a90-f540-4ea8-a6a3-d2f19ef93c85",
+                        "version": "KqlParameterItem/1.0",
+                        "name": "RefreshWorkflowOverride",
+                        "type": 5,
+                        "query": "resources\r\n| where type =~ 'microsoft.logic/workflows'\r\n| where name =~ 'la-watchlist-refresh'\r\n| project id, label = strcat(name, ' (', resourceGroup, ')'), selected = iff(tolower(subscriptionId) == tolower('{WorkspaceSubscriptionId}') and tolower(resourceGroup) == tolower('{WorkspaceResourceGroup}'), true, false)",
+                        "typeSettings": {
+                          "additionalResourceOptions": [],
+                          "showDefault": false
+                        },
+                        "timeContext": {
+                          "durationMs": 259200000
+                        },
+                        "queryType": 1,
+                        "resourceType": "microsoft.resourcegraph/resources",
+                        "label": "Alternative refresh target (Logic App)"
+                      }
+                    ],
+                    "style": "above",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources"
+                  },
+                  "name": "param-RefreshWorkflowOverride"
+                },
+                {
+                  "type": 11,
+                  "content": {
+                    "version": "LinkItem/1.0",
+                    "style": "paragraph",
+                    "links": [
+                      {
+                        "id": "5de89ed9-73b6-438a-a330-f55332ec132d",
+                        "linkTarget": "ArmAction",
+                        "linkLabel": "🔄 Refresh (Alternative Target)",
+                        "style": "primary",
+                        "armActionContext": {
+                          "path": "{RefreshWorkflowOverride}/triggers/Recurrence/run?api-version=2016-06-01",
+                          "httpMethod": "POST",
+                          "title": "Refresh Connector Catalog (Alternative Target)",
+                          "description": "Use this option when the Logic App is in a different resource group than the selected workspace.",
+                          "actionName": "RunLogicAppAlt",
+                          "runLabel": "Refresh"
+                        }
+                      }
+                    ]
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "RefreshWorkflowOverride",
+                    "comparison": "isNotEqualTo"
+                  },
+                  "name": "link-RefreshCatalogAlternative"
                 },
                 {
                   "type": 1,
