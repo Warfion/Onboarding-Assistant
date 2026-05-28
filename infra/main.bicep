@@ -15,12 +15,19 @@ param uniqueSuffix string = uniqueString(resourceGroup().id)
 @description('Optional Teams/webhook URL for failure alerts (leave empty to disable)')
 param alertWebhookUrl string = ''
 
+@description('Public URL of the Function App zip package used by ZipDeploy')
+param functionPackageUri string = 'https://raw.githubusercontent.com/Warfion/Onboarding-Assistant/main/infra/function-package.zip'
+
+@description('Deploy the Sentinel workbook resource from the checked-in workbook JSON')
+param deployWorkbook bool = true
+
 // --- Variables ---
 var functionAppName = 'func-wl-parser-${uniqueSuffix}'
 var storageName = 'stwlparser${uniqueSuffix}'
 var hostingPlanName = 'plan-wl-parser-${uniqueSuffix}'
 var logicAppName = 'la-watchlist-refresh'
 var appInsightsName = 'ai-wl-parser-${uniqueSuffix}'
+var workbookName = guid(workspace.id, 'onboarding-assistant-workbook')
 
 // --- Existing workspace reference ---
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
@@ -98,11 +105,24 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
           value: 'powershell'
         }
         {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: appInsights.properties.InstrumentationKey
         }
       ]
     }
+  }
+}
+
+// Deploy function code package in one-click deployments.
+resource functionZipDeploy 'Microsoft.Web/sites/extensions@2024-04-01' = {
+  name: 'ZipDeploy'
+  parent: functionApp
+  properties: {
+    packageUri: functionPackageUri
   }
 }
 
@@ -166,8 +186,23 @@ resource conMetaWatchlist 'Microsoft.SecurityInsights/watchlists@2024-03-01' = {
   }
 }
 
+resource onboardingWorkbook 'Microsoft.Insights/workbooks@2023-06-01' = if (deployWorkbook) {
+  name: workbookName
+  location: location
+  kind: 'shared'
+  properties: {
+    category: 'sentinel'
+    displayName: 'Sentinel Data Source Onboarding Assistant'
+    description: 'Workbook for connector discovery, ingestion decision guidance, and connector health.'
+    sourceId: workspace.id
+    version: 'Notebook/1.0'
+    serializedData: loadTextContent('../Onboarding Assistant.workbook')
+  }
+}
+
 // --- Outputs ---
 output functionAppName string = functionApp.name
 output functionAppHostName string = functionApp.properties.defaultHostName
 output logicAppName string = logicApp.name
 output logicAppPrincipalId string = logicApp.identity.principalId
+output workbookResourceId string = deployWorkbook ? onboardingWorkbook.id : ''

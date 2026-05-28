@@ -67,6 +67,8 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 - `location`: Azure region for the deployed resources.
 - `uniqueSuffix`: Optional unique naming suffix derived from the resource group by default.
 - `alertWebhookUrl`: Optional webhook endpoint for failure notifications.
+- `functionPackageUri`: Public zip URL for Function App ZipDeploy (defaults to the package committed in this repo).
+- `deployWorkbook`: Set to `true` to deploy the workbook resource automatically.
 
 ### Resources deployed
 
@@ -78,6 +80,8 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 - System-assigned managed identity for the Logic App and Function App
 - Sentinel Contributor role assignment for the Logic App on the target workspace
 - `Con_Meta` watchlist for refresh tracking
+- ZipDeploy of Function App code package from `infra/function-package.zip`
+- Shared workbook resource from [Onboarding Assistant.workbook](Onboarding%20Assistant.workbook)
 
 ## Deployment Steps
 
@@ -89,13 +93,12 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 
 ## Post-Deployment Configuration
 
-After the ARM deployment completes, finish these manual steps:
+After the ARM deployment completes, run these validation steps:
 
-1. Publish the Azure Function code from [func-watchlist-parser](func-watchlist-parser) to the deployed Function App.
-2. Verify that the Logic App can invoke the Function App successfully.
-3. Import [Onboarding Assistant.workbook](Onboarding%20Assistant.workbook) into Microsoft Sentinel Workbooks.
-4. Run the Logic App once to populate or refresh the connector watchlists.
-5. Confirm that `Con_Meta` reflects a successful refresh and that the workbook renders expected results.
+1. Verify that the Logic App can invoke the Function App successfully.
+2. Confirm the workbook was created and opens in Microsoft Sentinel Workbooks.
+3. Run the Logic App once to populate or refresh the connector watchlists.
+4. Confirm that `Con_Meta` reflects a successful refresh and that the workbook renders expected results.
 
 ## Configuration
 
@@ -136,6 +139,7 @@ The current repository layout is:
 |   `-- Tests/
 |       `-- ParseConnectors.Tests.ps1
 `-- infra/
+    |-- function-package.zip
     |-- logic-app-definition.json
     |-- main.bicep
     `-- main.json

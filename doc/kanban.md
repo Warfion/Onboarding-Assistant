@@ -64,9 +64,29 @@
     CONSIDERATIONS:
     - Bicep needs to be compiled to ARM JSON for the Deploy button
       (az bicep build --file infra/main.bicep --outfile infra/main.json)
-    - Workbook import is manual (no ARM deployment for user workbooks)
-    - Function code deployment could use a zip deploy URL in Bicep later
+    - Workbook is now deployed via ARM in infra/main.bicep (deployWorkbook parameter)
+    - Function code is now deployed via ZipDeploy (functionPackageUri parameter)
     - Consider adding azd (Azure Developer CLI) support for full E2E
+
+    IMPLEMENTATION STATUS (2026-05-28):
+    ✅ Public GitHub repo and Deploy to Azure button are live
+    ✅ README includes deployment and configuration guidance
+    ✅ ARM template in infra/main.json is generated from infra/main.bicep
+    ✅ One-click deployment now includes workbook ARM deployment
+    ✅ One-click deployment now includes Function App code ZipDeploy
+    ⏳ Remaining: capture screenshots, embed architecture diagram, close Step 7
+
+    VALIDATION CHECK (Repo Deploy Test):
+    1. Run Deploy to Azure from README and complete deployment with workspaceName.
+    2. Confirm deployment status is Succeeded in Azure portal.
+    3. Verify Function App exists and ParseConnectors function is present.
+    4. Verify Logic App exists and is Enabled.
+    5. Open workbook in Sentinel Workbooks and confirm it renders all 3 tabs.
+    6. Trigger Logic App once manually and verify run status Succeeded.
+    7. Confirm watchlists Con and Con_Meta exist after first run.
+    8. Confirm Con_Meta latest row is Result=Success with non-empty SourceVersion.
+    9. Confirm workbook Tab 1 query returns connector rows from watchlist Con.
+    10. If any check fails, capture failing stage and error text in this card.
     ```
 
 ## In Progress
@@ -90,6 +110,8 @@
    ✅ Aligned watchlist schema references to the 12-column contract
      (including Subdomain and Connector ID).
    ✅ Refreshed file inventory in doc/docu.md to actual workspace files.
+     Included README.md, LICENSE, and CI workflow inventory entries;
+     removed stale deploy.zip and doc/AllConnectors.csv entries.
    ✅ Flagged doc/decision-tree.drawio for manual visual parity updates only.
    ```
 
