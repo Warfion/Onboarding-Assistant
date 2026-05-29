@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.0
-Last Updated: 2026-05-28
+Version: 2.2
+Last Updated: 2026-05-29
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -44,6 +44,7 @@ The workbook has three tabs:
 | InternalWSs | Hidden | Resolves default workspace from SecurityIncident URL parsing |
 | Subscription | Dropdown | Subscription picker using display names |
 | Workspace | Resource Picker | Workspace picker scoped to SecurityInsights-enabled workspaces |
+| WorkspaceEligible | Hidden | Runtime eligibility flag derived from selected workspace readiness (requires Con_Meta watchlist) |
 | WorkspaceID | Hidden | Workspace customerId lookup for selected workspace |
 | WorkspaceSubscriptionId | Hidden | Resolved subscription ID for the selected workspace |
 | WorkspaceResourceGroup | Hidden | Resolved resource group for the selected workspace |
@@ -70,6 +71,8 @@ Main behaviors:
 - Catalog refresh status card reads Con_Meta
 - Default refresh button triggers Logic App recurrence endpoint via ARM action using workspace-derived subscription and resource group parameters
 - Alternate refresh button supports explicit cross-resource-group target selection using a workflow override picker
+- Workspace picker is scoped to Sentinel-enabled workspaces in the selected subscription, and auto-selects when exactly one workspace is available
+- Workbook tabs are blocked when workspace eligibility is not satisfied; an onboarding guard message instructs users to run refresh initialization
 - Publisher and method pie charts summarize active catalog state
 - Full grid supports a status-based filter (All, First Party, Third Party, Deprecated)
 
@@ -210,10 +213,11 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Tab 3 domain-subdomain drilldown | Complete |
 | Tab 1 refresh targeting and override flow | Complete |
 | Tab 1 catalog status rendering from latest Con_Meta row | Complete |
+| Workspace eligibility gating (Sentinel + Con_Meta readiness) | Complete |
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
 | Function test suite | 33 passing |
-| Public GitHub packaging and one-click deploy documentation | Planned |
+| Public GitHub packaging and one-click deploy documentation | Complete |
 
 ---
 
@@ -221,7 +225,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 
 | Gap | Impact | Tracking |
 |---|---|---|
-| Public GitHub packaging and one-click deploy documentation is not finalized | Slows reproducible onboarding for external teams | Kanban item #7 |
+| None currently tracked | N/A | N/A |
 
 ---
 

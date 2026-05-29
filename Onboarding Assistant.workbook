@@ -64,7 +64,7 @@
             "name": "Workspace",
             "type": 5,
             "isRequired": true,
-            "query": "resources | where type =~ 'Microsoft.operationsmanagement/solutions' | where name contains 'SecurityInsights' \r\n| parse name with \"SecurityInsights(\" label \")\" \r\n| project id = tostring(properties.workspaceResourceId), label, selected = iff(label =~ '{InternalWSs}', true, false)",
+            "query": "let selectedSubscriptionId = tostring(split('{Subscription}', '/')[2]);\r\nlet sentinelWorkspaces = resources\r\n| where type =~ 'microsoft.operationsmanagement/solutions'\r\n| where name startswith 'SecurityInsights('\r\n| where subscriptionId =~ selectedSubscriptionId\r\n| parse name with 'SecurityInsights(' workspaceName ')'\r\n| project id = tostring(properties.workspaceResourceId), label = workspaceName\r\n| distinct id, label;\r\nlet workspaceCount = toscalar(sentinelWorkspaces | count);\r\nsentinelWorkspaces\r\n| project id, label, selected = iff(workspaceCount == 1, true, iff(label =~ '{InternalWSs}', true, false))\r\n| order by label asc",
             "typeSettings": {
               "additionalResourceOptions": []
             },
@@ -73,8 +73,20 @@
             },
             "queryType": 1,
             "resourceType": "microsoft.resourcegraph/resources",
-            "value": "/subscriptions/45dc4629-f423-4e3c-a063-37b62eec82fb/resourcegroups/rg-sentinel-001/providers/microsoft.operationalinsights/workspaces/log-sentinel-001",
             "label": "🗂️ Workspace"
+          },
+          {
+            "id": "3a32bd8f-cfd1-4b20-9f0d-0d66d7aa668f",
+            "version": "KqlParameterItem/1.0",
+            "name": "WorkspaceEligible",
+            "type": 1,
+            "query": "let selectedWorkspace = '{Workspace}';\r\nlet hasConMeta = toscalar(_GetWatchlist('Con_Meta') | count);\r\nprint WorkspaceEligible = iff(isempty(selectedWorkspace), 'No', iff(hasConMeta > 0, 'Yes', 'No'))",
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 259200000
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
           },
           {
             "id": "a0c2e0eb-d5b6-4700-a394-e70c28b1d04c",
@@ -204,6 +216,19 @@
       "styleSettings": {
         "padding": "0"
       }
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Workspace Not Ready\r\n\r\nThe selected workspace is not eligible yet for this workbook view.\r\n\r\nRequired:\r\n- Microsoft Sentinel must be enabled on the workspace\r\n- Watchlist Con_Meta must exist\r\n\r\nNext steps:\r\n1. Select a Sentinel-enabled workspace from the picker\r\n2. If this is a fresh deployment, run Refresh Connector Catalog once to initialize data\r\n3. Reload the workbook",
+        "style": "warning"
+      },
+      "conditionalVisibility": {
+        "parameterName": "WorkspaceEligible",
+        "comparison": "isNotEqualTo",
+        "value": "Yes"
+      },
+      "name": "text-WorkspaceEligibilityGuard"
     },
     {
       "type": 12,
@@ -645,11 +670,18 @@
           }
         ]
       },
-      "conditionalVisibility": {
-        "parameterName": "Tab",
-        "comparison": "isEqualTo",
-        "value": "1"
-      },
+      "conditionalVisibilities": [
+        {
+          "parameterName": "Tab",
+          "comparison": "isEqualTo",
+          "value": "1"
+        },
+        {
+          "parameterName": "WorkspaceEligible",
+          "comparison": "isEqualTo",
+          "value": "Yes"
+        }
+      ],
       "name": "group-AvailableConnectors"
     },
     {
@@ -1762,11 +1794,18 @@
           }
         ]
       },
-      "conditionalVisibility": {
-        "parameterName": "Tab",
-        "comparison": "isEqualTo",
-        "value": "2"
-      },
+      "conditionalVisibilities": [
+        {
+          "parameterName": "Tab",
+          "comparison": "isEqualTo",
+          "value": "2"
+        },
+        {
+          "parameterName": "WorkspaceEligible",
+          "comparison": "isEqualTo",
+          "value": "Yes"
+        }
+      ],
       "name": "group-AlternativeIngestion"
     },
     {
@@ -2237,11 +2276,18 @@
           }
         ]
       },
-      "conditionalVisibility": {
-        "parameterName": "Tab",
-        "comparison": "isEqualTo",
-        "value": "3"
-      },
+      "conditionalVisibilities": [
+        {
+          "parameterName": "Tab",
+          "comparison": "isEqualTo",
+          "value": "3"
+        },
+        {
+          "parameterName": "WorkspaceEligible",
+          "comparison": "isEqualTo",
+          "value": "Yes"
+        }
+      ],
       "name": "group-InstalledConnectors"
     }
   ],

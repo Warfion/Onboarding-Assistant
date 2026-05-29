@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.2
-Updated: 2026-05-28
+Version: 2.3
+Updated: 2026-05-29
 
 ---
 
@@ -44,7 +44,12 @@ Refresh pipeline (weekly + on-demand)
 
 ```
 Global parameters
-  Subscription | Workspace | Help | Tab
+  Subscription | Workspace | WorkspaceEligible | Help | Tab
+
+Workspace eligibility model
+  Workspace picker is constrained to SecurityInsights-enabled workspaces in the selected subscription
+  WorkspaceEligible is resolved at runtime by verifying Con_Meta availability in the selected workspace
+  Tab content groups are rendered only when WorkspaceEligible = Yes
 
 Tab 1 group: group-AvailableConnectors
   Left (70%): search, detail card, charts, filtered grid

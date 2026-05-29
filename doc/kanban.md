@@ -2,96 +2,50 @@
 
 ## To Do
 
-### 🟡 7 — GitHub Repo + README with Deploy to Azure Button
-
-  - tags: [deployment, github, documentation]
-  - priority: medium
-    ```md
-    Depends on: Watchlist Auto-Update (#5) — infra must be finalized first.
-
-    Publish to a public GitHub repo with a one-click "Deploy to Azure" button.
-    README includes overview, screenshots, architecture diagram, prerequisites,
-    and post-deployment configuration steps. ARM template from infra/main.bicep.
-
-    CONCEPT: Publish the solution to a public GitHub repo with a one-click
-    "Deploy to Azure" button so SOC teams can deploy the full stack
-    (workbook + Function App + Logic App + watchlists) in minutes.
-
-    README.md STRUCTURE:
-    1. Hero banner + title: "Sentinel Data Source Onboarding Assistant"
-    2. Deploy to Azure button:
-       [![Deploy to Azure](https://aka.ms/deploytoazurebutton)]
-       (https://portal.azure.com/#create/Microsoft.Template/uri/<encoded-bicep-url>)
-    3. Overview — what it does (3 tabs, decision tree, coverage gaps)
-    4. Screenshots — Tab 1 search, Tab 2 decision tree, Tab 3 health
-    5. Prerequisites — Sentinel workspace, auditing enabled, RBAC
-    6. Architecture diagram — embed from architecture.md
-    7. Deployment steps — what the button deploys + post-deployment config
-    8. Configuration — watchlist refresh, domain mapping
-    9. Contributing — how to add connectors, update domain mapping
-    10. License
-
-    DEPLOY TO AZURE BUTTON:
-    - Uses ARM/Bicep template from infra/main.bicep
-    - Template must be hosted at a raw GitHub URL
-    - Button URL format:
-      https://portal.azure.com/#create/Microsoft.Template/uri/
-      {url-encoded-raw-github-link-to-main.bicep}
-    - Parameters exposed: workspaceName, location
-    - Deploys: Function App + Logic App + MI + RBAC + Con_Meta watchlist
-    - Post-deploy: upload Function code via VS Code / CLI,
-      import workbook JSON via Sentinel Workbooks blade
-
-    REPO STRUCTURE (planned):
-    /
-    ├── README.md
-    ├── infra/main.bicep
-    ├── func-watchlist-parser/
-    │   ├── host.json
-    │   ├── requirements.psd1
-    │   ├── profile.ps1
-    │   └── ParseConnectors/
-    │       ├── function.json
-    │       └── run.ps1
-    ├── workbook/Onboarding Assistant.workbook
-    ├── docs/
-    │   ├── architecture.md
-    │   ├── docu.md
-    │   └── decision-tree.drawio
-    ├── data/AllConnectors.csv
-    └── LICENSE
-
-    CONSIDERATIONS:
-    - Bicep needs to be compiled to ARM JSON for the Deploy button
-      (az bicep build --file infra/main.bicep --outfile infra/main.json)
-    - Workbook is now deployed via ARM in infra/main.bicep (deployWorkbook parameter)
-    - Function code is now deployed via ZipDeploy (functionPackageUri parameter)
-    - Consider adding azd (Azure Developer CLI) support for full E2E
-
-    IMPLEMENTATION STATUS (2026-05-28):
-    ✅ Public GitHub repo and Deploy to Azure button are live
-    ✅ README includes deployment and configuration guidance
-    ✅ ARM template in infra/main.json is generated from infra/main.bicep
-    ✅ One-click deployment now includes workbook ARM deployment
-    ✅ One-click deployment now includes Function App code ZipDeploy
-    ⏳ Remaining: capture screenshots, embed architecture diagram, close Step 7
-
-    VALIDATION CHECK (Repo Deploy Test):
-    1. Run Deploy to Azure from README and complete deployment with workspaceName.
-    2. Confirm deployment status is Succeeded in Azure portal.
-    3. Verify Function App exists and ParseConnectors function is present.
-    4. Verify Logic App exists and is Enabled.
-    5. Open workbook in Sentinel Workbooks and confirm it renders all 3 tabs.
-    6. Trigger Logic App once manually and verify run status Succeeded.
-    7. Confirm watchlists Con and Con_Meta exist after first run.
-    8. Confirm Con_Meta latest row is Result=Success with non-empty SourceVersion.
-    9. Confirm workbook Tab 1 query returns connector rows from watchlist Con.
-    10. If any check fails, capture failing stage and error text in this card.
-    ```
-
 ## In Progress
 
 ## Done
+
+### ✅ 7 — GitHub Repo + README with Deploy to Azure Button
+
+  - tags: [deployment, github, documentation]
+  - priority: medium
+  - status: complete
+   ```md
+   Published and validated the one-click deployment experience for the Sentinel Data Source Onboarding Assistant.
+
+   DELIVERED:
+   ✅ Public GitHub repo and Deploy to Azure button are live.
+   ✅ README includes deployment and configuration guidance.
+   ✅ ARM template in infra/main.json is generated from infra/main.bicep.
+   ✅ One-click deployment includes workbook deployment and Function package mounting.
+   ✅ End-to-end deployment validation succeeded (deployment + Logic App run + workbook + watchlists).
+
+   INVENTORY DELTA:
+   - Added: none
+   - Removed: none
+   ```
+
+### ✅ 14 — Workspace Eligibility Guard and Tab Gating
+
+  - tags: [workbook, guardrails, ux, sync-docs]
+  - priority: high
+  - status: complete
+   ```md
+   Implemented strict workspace eligibility behavior for safer first-run experience.
+
+   DELIVERED:
+   ✅ Scoped workspace picker to SecurityInsights-enabled workspaces in the selected subscription.
+   ✅ Added single-option auto-select behavior when exactly one eligible workspace is available.
+   ✅ Added hidden WorkspaceEligible parameter to enforce Con_Meta readiness on selected workspace.
+   ✅ Added blocking eligibility message when workspace readiness conditions are not met.
+   ✅ Gated all three tab content groups behind WorkspaceEligible=Yes to prevent invalid execution paths.
+   ✅ Updated doc/docu.md and doc/architecture.md to document eligibility and first-run initialization behavior.
+
+   INVENTORY DELTA:
+   - Added: none
+   - Removed: none
+   ```
 
 ### ✅ 13 — Workbook Refresh Targeting and Status Sync
 
