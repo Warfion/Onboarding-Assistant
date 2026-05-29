@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "9698164950726709646"
+      "templateHash": "11229934467993791377"
     }
   },
   "parameters": {
@@ -519,7 +519,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
-      "name": "[guid(resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), variables('logicAppName'), 'ab8e14d6-4a74-4a29-9ba8-549422addade', deployment().name)]",
+      "name": "[guid(resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName')), variables('logicAppName'), 'ab8e14d6-4a74-4a29-9ba8-549422addade', 'v2')]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ab8e14d6-4a74-4a29-9ba8-549422addade')]",
         "principalId": "[reference(resourceId('Microsoft.Logic/workflows', variables('logicAppName')), '2019-05-01', 'full').identity.principalId]",
