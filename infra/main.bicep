@@ -158,7 +158,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
 // --- RBAC: Logic App MI → Microsoft Sentinel Contributor on workspace ---
 // Role ID: ab8e14d6-4a74-4a29-9ba8-549422addade (Microsoft Sentinel Contributor)
 resource sentinelContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(workspace.id, logicApp.name, 'ab8e14d6-4a74-4a29-9ba8-549422addade', 'v2')
+  name: guid(workspace.id, logicApp.name, 'ab8e14d6-4a74-4a29-9ba8-549422addade', deployment().name)
   scope: workspace
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ab8e14d6-4a74-4a29-9ba8-549422addade')
