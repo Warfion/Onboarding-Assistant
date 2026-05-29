@@ -188,7 +188,7 @@ Workflow
 
 ### 7.1 Manual Trigger Targeting Modes
 
-- Default targeting mode: derives subscription and resource group from the selected workspace, then triggers la-watchlist-refresh deterministically in that workspace scope.
+- Default targeting mode: resolves the workflow resource ID from the latest Con_Meta row (LogicAppResourceId) for the selected workspace, then triggers that workflow. If the field is unavailable, fallback targeting derives subscription and resource group from the selected workspace.
 - Override targeting mode: uses an operator-selected Logic App workflow resource for cross-resource-group deployments where the refresh workflow is hosted outside the workspace resource group.
 
 Operator guidance:

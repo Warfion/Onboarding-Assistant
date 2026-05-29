@@ -148,6 +148,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       workspaceName: {
         value: workspaceName
       }
+      logicAppName: {
+        value: logicAppName
+      }
       alertWebhookUrl: {
         value: alertWebhookUrl
       }
@@ -178,7 +181,7 @@ resource conMetaWatchlist 'Microsoft.SecurityInsights/watchlists@2024-03-01' = {
     source: 'watchlist'
     itemsSearchKey: 'RunId'
     contentType: 'Text/Csv'
-    rawContent: 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\ninitial,2026-01-01T00:00:00Z,Pending,,0,0,0,,'
+    rawContent: 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId\ninitial,2026-01-01T00:00:00Z,Pending,,0,0,0,,,${logicApp.id}'
   }
 }
 

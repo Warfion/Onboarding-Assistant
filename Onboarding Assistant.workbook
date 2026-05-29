@@ -64,9 +64,13 @@
             "name": "Workspace",
             "type": 5,
             "isRequired": true,
-            "query": "let selectedSubscriptionId = tostring(split('{Subscription}', '/')[2]);\r\nlet sentinelWorkspaces = resources\r\n| where type =~ 'microsoft.operationsmanagement/solutions'\r\n| where name startswith 'SecurityInsights('\r\n| where subscriptionId =~ selectedSubscriptionId\r\n| parse name with 'SecurityInsights(' workspaceName ')'\r\n| project id = tostring(properties.workspaceResourceId), label = workspaceName\r\n| distinct id, label;\r\nlet workspaceCount = toscalar(sentinelWorkspaces | count);\r\nsentinelWorkspaces\r\n| project id, label, selected = iff(workspaceCount == 1, true, iff(label =~ '{InternalWSs}', true, false))\r\n| order by label asc",
+            "query": "resources\r\n| where type =~ 'microsoft.operationsmanagement/solutions'\r\n| where name startswith 'SecurityInsights('\r\n| extend value = tostring(properties.workspaceResourceId)\r\n| extend wsName = tostring(split(value, '/')[8])\r\n| extend rgName = tostring(resourceGroup)\r\n| where isnotempty(value) and isnotempty(wsName)\r\n| project value, label = strcat(wsName, ' (', rgName, ')'), selected = iff(tolower(value) == tolower('/subscriptions/45dc4629-f423-4e3c-a063-37b62eec82fb/resourcegroups/rg-sentinel-001/providers/microsoft.operationalinsights/workspaces/log-sentinel-001'), true, false)\r\n| distinct value, label, selected\r\n| order by label asc",
+            "crossComponentResources": [
+              "{Subscription}"
+            ],
             "typeSettings": {
-              "additionalResourceOptions": []
+              "additionalResourceOptions": [],
+              "showDefault": true
             },
             "timeContext": {
               "durationMs": 259200000
@@ -81,6 +85,9 @@
             "name": "WorkspaceEligible",
             "type": 1,
             "query": "let selectedWorkspace = '{Workspace}';\r\nlet hasConMeta = toscalar(_GetWatchlist('Con_Meta') | count);\r\nprint WorkspaceEligible = iff(isempty(selectedWorkspace), 'No', iff(hasConMeta > 0, 'Yes', 'No'))",
+            "crossComponentResources": [
+              "{Workspace}"
+            ],
             "isHiddenWhenLocked": true,
             "timeContext": {
               "durationMs": 259200000
@@ -126,6 +133,35 @@
             },
             "queryType": 1,
             "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "4d30ef9d-82b8-45de-8d4c-ae9d34f85db3",
+            "version": "KqlParameterItem/1.0",
+            "name": "RefreshWorkflowIdFromMeta",
+            "type": 1,
+            "query": "_GetWatchlist('Con_Meta')\r\n| extend RefreshTime = todatetime(Timestamp), LogicAppResourceId = tostring(column_ifexists('LogicAppResourceId', ''))\r\n| where isnotempty(LogicAppResourceId)\r\n| summarize arg_max(RefreshTime, LogicAppResourceId)\r\n| project RefreshWorkflowIdFromMeta = LogicAppResourceId",
+            "crossComponentResources": [
+              "{Workspace}"
+            ],
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 259200000
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "829dfce7-fbc5-4f55-a878-8a83d88e3508",
+            "version": "KqlParameterItem/1.0",
+            "name": "RefreshWorkflowResourceId",
+            "type": 1,
+            "query": "print RefreshWorkflowResourceId = iff(isnotempty('{RefreshWorkflowIdFromMeta}'), '{RefreshWorkflowIdFromMeta}', strcat('/subscriptions/', '{WorkspaceSubscriptionId}', '/resourceGroups/', '{WorkspaceResourceGroup}', '/providers/Microsoft.Logic/workflows/la-watchlist-refresh'))",
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 259200000
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
           },
           {
             "id": "0fc73ced-c849-4b09-9dfc-805ecb089433",
@@ -388,7 +424,7 @@
                         "linkLabel": "🔄 Refresh Connector Catalog",
                         "style": "primary",
                         "armActionContext": {
-                          "path": "/subscriptions/{WorkspaceSubscriptionId}/resourceGroups/{WorkspaceResourceGroup}/providers/Microsoft.Logic/workflows/la-watchlist-refresh/triggers/Recurrence/run?api-version=2016-06-01",
+                          "path": "{RefreshWorkflowResourceId}/triggers/Recurrence/run?api-version=2016-06-01",
                           "httpMethod": "POST",
                           "title": "Refresh Connector Catalog",
                           "description": "This will trigger the Logic App to refresh the connector watchlist from GitHub. The process takes about 1–2 minutes. Reload the workbook afterward to see updated data.",
@@ -400,71 +436,6 @@
                   },
                   "customWidth": "30",
                   "name": "link-RefreshCatalog"
-                },
-                {
-                  "type": 1,
-                  "content": {
-                    "json": "ℹ️ Default behavior: **Refresh Connector Catalog** triggers the Logic App in the selected workspace's resource group.\r\n\r\nAlternative: if your Logic App is hosted in a different resource group, choose it below and use **Refresh (Alternative Target)**.",
-                    "style": "info"
-                  },
-                  "name": "text-RefreshBehaviorNote"
-                },
-                {
-                  "type": 9,
-                  "content": {
-                    "version": "KqlParameterItem/1.0",
-                    "parameters": [
-                      {
-                        "id": "9abf8a90-f540-4ea8-a6a3-d2f19ef93c85",
-                        "version": "KqlParameterItem/1.0",
-                        "name": "RefreshWorkflowOverride",
-                        "type": 5,
-                        "query": "resources\r\n| where type =~ 'microsoft.logic/workflows'\r\n| where name =~ 'la-watchlist-refresh'\r\n| project id, label = strcat(name, ' (', resourceGroup, ')'), selected = iff(tolower(subscriptionId) == tolower('{WorkspaceSubscriptionId}') and tolower(resourceGroup) == tolower('{WorkspaceResourceGroup}'), true, false)",
-                        "typeSettings": {
-                          "additionalResourceOptions": [],
-                          "showDefault": false
-                        },
-                        "timeContext": {
-                          "durationMs": 259200000
-                        },
-                        "queryType": 1,
-                        "resourceType": "microsoft.resourcegraph/resources",
-                        "label": "Alternative refresh target (Logic App)"
-                      }
-                    ],
-                    "style": "above",
-                    "queryType": 1,
-                    "resourceType": "microsoft.resourcegraph/resources"
-                  },
-                  "name": "param-RefreshWorkflowOverride"
-                },
-                {
-                  "type": 11,
-                  "content": {
-                    "version": "LinkItem/1.0",
-                    "style": "paragraph",
-                    "links": [
-                      {
-                        "id": "5de89ed9-73b6-438a-a330-f55332ec132d",
-                        "linkTarget": "ArmAction",
-                        "linkLabel": "🔄 Refresh (Alternative Target)",
-                        "style": "primary",
-                        "armActionContext": {
-                          "path": "{RefreshWorkflowOverride}/triggers/Recurrence/run?api-version=2016-06-01",
-                          "httpMethod": "POST",
-                          "title": "Refresh Connector Catalog (Alternative Target)",
-                          "description": "Use this option when the Logic App is in a different resource group than the selected workspace.",
-                          "actionName": "RunLogicAppAlt",
-                          "runLabel": "Refresh"
-                        }
-                      }
-                    ]
-                  },
-                  "conditionalVisibility": {
-                    "parameterName": "RefreshWorkflowOverride",
-                    "comparison": "isNotEqualTo"
-                  },
-                  "name": "link-RefreshCatalogAlternative"
                 },
                 {
                   "type": 1,
@@ -1846,6 +1817,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "cards",
               "chartSettings": {
                 "showMetrics": false
@@ -1866,6 +1840,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "piechart"
             },
             "customWidth": "33",
@@ -1883,6 +1860,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "piechart"
             },
             "customWidth": "33",
@@ -1926,6 +1906,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "table",
               "gridSettings": {
                 "rowLimit": 50,
@@ -2017,6 +2000,9 @@
                     },
                     "queryType": 0,
                     "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
                     "visualization": "table",
                     "gridSettings": {
                       "rowLimit": 500,
@@ -2072,6 +2058,9 @@
                     },
                     "queryType": 0,
                     "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
                     "visualization": "table",
                     "gridSettings": {
                       "rowLimit": 100,
@@ -2112,6 +2101,9 @@
               "exportDefaultValue": "",
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "table",
               "gridSettings": {
                 "rowLimit": 50,
@@ -2155,6 +2147,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "table",
               "gridSettings": {
                 "formatters": [
@@ -2255,6 +2250,9 @@
               },
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
               "visualization": "table",
               "gridSettings": {
                 "rowLimit": 500

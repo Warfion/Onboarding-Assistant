@@ -1,6 +1,6 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.2
+Version: 2.3
 Last Updated: 2026-05-29
 Workbook File: Onboarding Assistant.workbook
 
@@ -69,7 +69,7 @@ Main behaviors:
 - Single-row details table and description card are filtered by exact connector name
 - Copilot nudge appears only when a connector is selected
 - Catalog refresh status card reads Con_Meta
-- Default refresh button triggers Logic App recurrence endpoint via ARM action using workspace-derived subscription and resource group parameters
+- Default refresh button triggers the Logic App recurrence endpoint using the Logic App resource ID stored in Con_Meta (with workspace-derived fallback if metadata is not present)
 - Alternate refresh button supports explicit cross-resource-group target selection using a workflow override picker
 - Workspace picker is scoped to Sentinel-enabled workspaces in the selected subscription, and auto-selects when exactly one workspace is available
 - Workbook tabs are blocked when workspace eligibility is not satisfied; an onboarding guard message instructs users to run refresh initialization
@@ -226,6 +226,33 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Gap | Impact | Tracking |
 |---|---|---|
 | None currently tracked | N/A | N/A |
+
+### 9.1 Fresh Redeploy RBAC Cleanup (When Identity Is Recreated)
+
+If a fresh redeploy recreates the Logic App managed identity, old workspace-scoped role assignments can block deployment with `RoleAssignmentUpdateNotPermitted` or `RoleAssignmentExists`.
+
+Use this cleanup runbook before redeploying:
+
+```powershell
+$rg = "rg-sentinel-001"
+$ws = "log-sentinel-001"
+$la = "la-watchlist-refresh"
+
+$subId = az account show --query id -o tsv
+$wsScope = "/subscriptions/$subId/resourceGroups/$rg/providers/Microsoft.OperationalInsights/workspaces/$ws"
+$currentPrincipal = az resource show -g $rg -n $la --resource-type Microsoft.Logic/workflows --query identity.principalId -o tsv
+
+Write-Output "Current Logic App principal: $currentPrincipal"
+
+az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor'].{assignmentId:id,principalId:principalId}" -o table
+
+az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor' && principalId!='$currentPrincipal'].id" -o tsv |
+  ForEach-Object { az role assignment delete --ids $_ }
+
+az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor'].{assignmentId:id,principalId:principalId}" -o table
+```
+
+Expected result: only one `Microsoft Sentinel Contributor` assignment remains on the workspace, and its `principalId` matches the current Logic App identity.
 
 ---
 

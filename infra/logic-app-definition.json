@@ -7,6 +7,7 @@
     "subscriptionId": { "defaultValue": "", "type": "String" },
     "resourceGroupName": { "defaultValue": "", "type": "String" },
     "workspaceName": { "defaultValue": "", "type": "String" },
+    "logicAppName": { "defaultValue": "", "type": "String" },
     "alertWebhookUrl": { "defaultValue": "", "type": "String" }
   },
   "triggers": {
@@ -150,7 +151,7 @@
             "source": "watchlist",
             "itemsSearchKey": "RunId",
             "contentType": "Text/Csv",
-            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Success,@{body('Parse_Function_Response')?['stats']?['sourceVersion']},@{body('Parse_Function_Response')?['stats']?['active']},@{body('Parse_Function_Response')?['stats']?['deprecated']},@{body('Parse_Function_Response')?['stats']?['total']},,"
+            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId\n@{guid()},@{utcNow()},Success,@{body('Parse_Function_Response')?['stats']?['sourceVersion']},@{body('Parse_Function_Response')?['stats']?['active']},@{body('Parse_Function_Response')?['stats']?['deprecated']},@{body('Parse_Function_Response')?['stats']?['total']},,,@{concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Logic/workflows/', parameters('logicAppName'))}"
           }
         },
         "authentication": {
@@ -177,7 +178,7 @@
             "source": "watchlist",
             "itemsSearchKey": "RunId",
             "contentType": "Text/Csv",
-            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary\n@{guid()},@{utcNow()},Failed,,,,,ParseConnectors,@{if(equals(outputs('Call_ParseConnectors')?['statusCode'], null), 'Function unreachable', body('Call_ParseConnectors'))}"
+            "rawContent": "RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId\n@{guid()},@{utcNow()},Failed,,,,,ParseConnectors,@{if(equals(outputs('Call_ParseConnectors')?['statusCode'], null), 'Function unreachable', body('Call_ParseConnectors'))},@{concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourceGroupName'), '/providers/Microsoft.Logic/workflows/', parameters('logicAppName'))}"
           }
         },
         "authentication": {
