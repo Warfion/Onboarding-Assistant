@@ -66,8 +66,8 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 ### Parameters exposed
 
 - `workspaceName`: Existing Log Analytics workspace name with Sentinel enabled.
-- `workspaceSubscriptionId`: Subscription containing the Sentinel workspace. Defaults to the deployment subscription.
-- `workspaceResourceGroupName`: Resource group containing the Sentinel workspace. Defaults to the deployment resource group.
+- `workspaceSubscriptionId`: Subscription containing the Sentinel workspace. Required.
+- `workspaceResourceGroupName`: Resource group containing the Sentinel workspace. Required.
 - `location`: Azure region for the deployed resources.
 - `uniqueSuffix`: Optional unique naming suffix derived from the resource group by default.
 - `alertWebhookUrl`: Optional webhook endpoint for failure notifications.
@@ -90,8 +90,11 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 ## Deployment Steps
 
 1. Select the Deploy to Azure button.
-2. Choose the subscription, resource group, and deployment location.
-3. Enter the Sentinel workspace name and, if needed, the workspace subscription and resource group.
+2. Choose the subscription and resource group where the stack resources will live (Function App, Logic App, Storage, etc.).
+3. **Enter the Sentinel workspace details** — these are **required**:
+   - `workspaceName`: The name of your existing Sentinel workspace
+   - `workspaceSubscriptionId`: The subscription containing that workspace (may differ from the stack subscription)
+   - `workspaceResourceGroupName`: The resource group containing that workspace (may differ from the stack resource group)
 4. Enter the optional alert webhook URL.
 5. Review the role assignment impact and start the deployment.
 6. Wait for the infrastructure deployment to complete.

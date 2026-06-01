@@ -7,10 +7,10 @@
 param workspaceName string
 
 @description('Subscription that contains the Log Analytics workspace')
-param workspaceSubscriptionId string = subscription().subscriptionId
+param workspaceSubscriptionId string
 
 @description('Resource group that contains the Log Analytics workspace')
-param workspaceResourceGroupName string = resourceGroup().name
+param workspaceResourceGroupName string
 
 @description('Resource group location')
 param location string = resourceGroup().location

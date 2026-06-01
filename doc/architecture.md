@@ -196,7 +196,7 @@ Workflow
 
 Deployment note:
 
-- The infrastructure template accepts explicit workspace subscription and workspace resource group parameters so the workspace can be deployed independently from the Logic App/Function stack.
+- The infrastructure template requires explicit workspace subscription and workspace resource group parameters so the workspace can be deployed independently from the Logic App/Function stack.
 
 Operator guidance:
 

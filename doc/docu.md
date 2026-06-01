@@ -32,7 +32,7 @@ The workbook has three tabs:
 | Health Source | SentinelHealth table | Last 7 days connector status/freshness telemetry |
 | Catalog Origin | oshezaf/sentinelninja | Parsed from GitHub content by Azure Function |
 | Automation | Logic App + Azure Function | Weekly refresh with atomic watchlist update |
-| Deployment Scope | Cross-resource-group supported | Explicit workspaceSubscriptionId and workspaceResourceGroupName parameters in infra/main.bicep |
+| Deployment Scope | Cross-resource-group supported | Explicit workspaceSubscriptionId and workspaceResourceGroupName parameters are required in infra/main.bicep |
 | Fallback Resource | Log Analytics Workspace | log-sentinel-001 in rg-sentinel-001 |
 
 ---
