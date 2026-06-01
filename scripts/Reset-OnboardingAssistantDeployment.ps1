@@ -4,6 +4,7 @@ param(
     [string]$WorkspaceResourceId,
     [string]$WorkspaceName,
     [string]$ResourceGroupName,
+    [string]$DeploymentResourceGroupName,
     [string]$LogicAppName = 'la-watchlist-refresh',
     [switch]$DeleteResourceGroup,
     [switch]$SkipSentinelContributorCleanup,
@@ -61,6 +62,17 @@ function Parse-ResourceId {
         SubscriptionId = $parts[2]
         ResourceGroupName = $parts[4]
     }
+}
+
+function Get-WorkspaceNameFromResourceId {
+    param([Parameter(Mandatory = $true)][string]$WorkspaceResourceId)
+
+    $parts = $WorkspaceResourceId -split '/'
+    if ($parts.Length -lt 9) {
+        throw "Invalid workspace resource ID format: $WorkspaceResourceId"
+    }
+
+    return $parts[8]
 }
 
 function Resolve-WorkspaceResourceId {
@@ -174,6 +186,67 @@ resources
     return $workspaces[0]
 }
 
+function Resolve-DeploymentResourceGroups {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResolvedWorkspaceId,
+        [Parameter(Mandatory = $true)][string]$ResolvedWorkspaceName,
+        [Parameter(Mandatory = $true)][string]$ResolvedWorkspaceSubscriptionId,
+        [Parameter(Mandatory = $true)][string]$ResolvedWorkspaceResourceGroupName,
+        [string]$ExplicitDeploymentResourceGroupName,
+        [Parameter(Mandatory = $true)][string]$TargetLogicAppName
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitDeploymentResourceGroupName)) {
+        $explicitGroups = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        [void]$explicitGroups.Add($ExplicitDeploymentResourceGroupName)
+        [void]$explicitGroups.Add($ResolvedWorkspaceResourceGroupName)
+        return @($explicitGroups)
+    }
+
+    $candidateLogicApps = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '--resource-type', 'Microsoft.Logic/workflows',
+            '--query', "[?name=='$TargetLogicAppName'].id",
+            '-o', 'json'
+        ))
+
+    $deploymentResourceGroups = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($logicAppId in $candidateLogicApps) {
+        if ([string]::IsNullOrWhiteSpace($logicAppId)) {
+            continue
+        }
+
+        $logicAppWorkspaceName = (& az resource show --ids $logicAppId --query "properties.parameters.workspaceName.value" -o tsv 2>$null)
+        if ($LASTEXITCODE -ne 0) {
+            continue
+        }
+
+        $logicAppWorkspaceSub = (& az resource show --ids $logicAppId --query "properties.parameters.subscriptionId.value" -o tsv 2>$null)
+        if ($LASTEXITCODE -ne 0) {
+            continue
+        }
+
+        $logicAppWorkspaceRg = (& az resource show --ids $logicAppId --query "properties.parameters.resourceGroupName.value" -o tsv 2>$null)
+        if ($LASTEXITCODE -ne 0) {
+            continue
+        }
+
+        if ($logicAppWorkspaceName -eq $ResolvedWorkspaceName -and
+            $logicAppWorkspaceSub -eq $ResolvedWorkspaceSubscriptionId -and
+            $logicAppWorkspaceRg -eq $ResolvedWorkspaceResourceGroupName) {
+            $parsedLogicApp = Parse-ResourceId -ResourceId $logicAppId
+            [void]$deploymentResourceGroups.Add($parsedLogicApp.ResourceGroupName)
+        }
+    }
+
+    if ($deploymentResourceGroups.Count -eq 0) {
+        [void]$deploymentResourceGroups.Add($ResolvedWorkspaceResourceGroupName)
+    }
+
+    return @($deploymentResourceGroups)
+}
+
 function Remove-RoleAssignmentsByIds {
     param([string[]]$AssignmentIds)
 
@@ -244,6 +317,7 @@ $resolvedWorkspaceId = Resolve-WorkspaceResourceId -ExplicitWorkspaceResourceId 
 $parsed = Parse-ResourceId -ResourceId $resolvedWorkspaceId
 $resolvedSubscriptionId = $parsed.SubscriptionId
 $resolvedResourceGroupName = $parsed.ResourceGroupName
+$resolvedWorkspaceName = Get-WorkspaceNameFromResourceId -WorkspaceResourceId $resolvedWorkspaceId
 
 if (-not [string]::IsNullOrWhiteSpace($SubscriptionId) -and $SubscriptionId -ne $resolvedSubscriptionId) {
     throw "Provided -SubscriptionId does not match workspace subscription. Workspace is in subscription: $resolvedSubscriptionId"
@@ -258,45 +332,68 @@ Write-Host "Workspace scope: $resolvedWorkspaceId"
 Write-Host "Resource group: $resolvedResourceGroupName"
 Write-Host "Subscription: $resolvedSubscriptionId"
 
-$logicAppIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '-g', $resolvedResourceGroupName,
-        '--resource-type', 'Microsoft.Logic/workflows',
-        '--query', "[?name=='$LogicAppName'].id",
-        '-o', 'json'
-    ))
+$deploymentResourceGroups = Resolve-DeploymentResourceGroups `
+    -ResolvedWorkspaceId $resolvedWorkspaceId `
+    -ResolvedWorkspaceName $resolvedWorkspaceName `
+    -ResolvedWorkspaceSubscriptionId $resolvedSubscriptionId `
+    -ResolvedWorkspaceResourceGroupName $resolvedResourceGroupName `
+    -ExplicitDeploymentResourceGroupName $DeploymentResourceGroupName `
+    -TargetLogicAppName $LogicAppName
 
-$functionAppIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '-g', $resolvedResourceGroupName,
-        '--resource-type', 'Microsoft.Web/sites',
-        '--query', "[?contains(kind, 'functionapp') && starts_with(name, 'func-wl-parser-')].id",
-        '-o', 'json'
-    ))
+Write-Host "Deployment resource groups scanned: $($deploymentResourceGroups -join ', ')"
 
-$planIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '-g', $resolvedResourceGroupName,
-        '--resource-type', 'Microsoft.Web/serverfarms',
-        '--query', "[?starts_with(name, 'plan-wl-parser-')].id",
-        '-o', 'json'
-    ))
+$logicAppIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$functionAppIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$planIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$appInsightsIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+$storageIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 
-$appInsightsIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '-g', $resolvedResourceGroupName,
-        '--resource-type', 'Microsoft.Insights/components',
-        '--query', "[?starts_with(name, 'ai-wl-parser-')].id",
-        '-o', 'json'
-    ))
+foreach ($rg in $deploymentResourceGroups) {
+    $rgLogicApps = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '-g', $rg,
+            '--resource-type', 'Microsoft.Logic/workflows',
+            '--query', "[?name=='$LogicAppName'].id",
+            '-o', 'json'
+        ))
+    foreach ($id in $rgLogicApps) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$logicAppIds.Add($id) } }
 
-$storageIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '-g', $resolvedResourceGroupName,
-        '--resource-type', 'Microsoft.Storage/storageAccounts',
-        '--query', "[?starts_with(name, 'stwlparser')].id",
-        '-o', 'json'
-    ))
+    $rgFunctionApps = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '-g', $rg,
+            '--resource-type', 'Microsoft.Web/sites',
+            '--query', "[?contains(kind, 'functionapp') && starts_with(name, 'func-wl-parser-')].id",
+            '-o', 'json'
+        ))
+    foreach ($id in $rgFunctionApps) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$functionAppIds.Add($id) } }
+
+    $rgPlans = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '-g', $rg,
+            '--resource-type', 'Microsoft.Web/serverfarms',
+            '--query', "[?starts_with(name, 'plan-wl-parser-')].id",
+            '-o', 'json'
+        ))
+    foreach ($id in $rgPlans) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$planIds.Add($id) } }
+
+    $rgAppInsights = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '-g', $rg,
+            '--resource-type', 'Microsoft.Insights/components',
+            '--query', "[?starts_with(name, 'ai-wl-parser-')].id",
+            '-o', 'json'
+        ))
+    foreach ($id in $rgAppInsights) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$appInsightsIds.Add($id) } }
+
+    $rgStorage = @(Invoke-AzJson -Arguments @(
+            'resource', 'list',
+            '-g', $rg,
+            '--resource-type', 'Microsoft.Storage/storageAccounts',
+            '--query', "[?starts_with(name, 'stwlparser')].id",
+            '-o', 'json'
+        ))
+    foreach ($id in $rgStorage) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$storageIds.Add($id) } }
+}
 
 $workbookIds = @(Invoke-AzJson -Arguments @(
         'resource', 'list',
@@ -311,7 +408,7 @@ $watchlistIds = @(
 )
 
 $principalIds = [System.Collections.Generic.HashSet[string]]::new()
-foreach ($id in @($logicAppIds + $functionAppIds)) {
+foreach ($id in @(@($logicAppIds) + @($functionAppIds))) {
     $pid = (& az resource show --ids $id --query identity.principalId -o tsv 2>$null)
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($pid)) {
         [void]$principalIds.Add($pid.Trim())
@@ -319,11 +416,11 @@ foreach ($id in @($logicAppIds + $functionAppIds)) {
 }
 
 Write-Host "Discovered resources for cleanup:"
-Write-Host " - Logic Apps: $($logicAppIds.Count)"
-Write-Host " - Function Apps: $($functionAppIds.Count)"
-Write-Host " - App Service Plans: $($planIds.Count)"
-Write-Host " - Application Insights: $($appInsightsIds.Count)"
-Write-Host " - Storage Accounts: $($storageIds.Count)"
+Write-Host " - Logic Apps: $(@($logicAppIds).Count)"
+Write-Host " - Function Apps: $(@($functionAppIds).Count)"
+Write-Host " - App Service Plans: $(@($planIds).Count)"
+Write-Host " - Application Insights: $(@($appInsightsIds).Count)"
+Write-Host " - Storage Accounts: $(@($storageIds).Count)"
 Write-Host " - Workbooks: $($workbookIds.Count)"
 Write-Host " - Watchlists to remove: $($watchlistIds.Count)"
 Write-Host " - Managed identity principals discovered: $($principalIds.Count)"
@@ -348,33 +445,34 @@ foreach ($id in $workbookIds) {
     Remove-ResourceById -ResourceId $id
 }
 
-foreach ($id in $logicAppIds) {
+foreach ($id in @($logicAppIds)) {
     Remove-ResourceById -ResourceId $id
 }
 
-foreach ($id in $functionAppIds) {
+foreach ($id in @($functionAppIds)) {
     Remove-ResourceById -ResourceId $id
 }
 
-foreach ($id in $planIds) {
+foreach ($id in @($planIds)) {
     Remove-ResourceById -ResourceId $id
 }
 
-foreach ($id in $appInsightsIds) {
+foreach ($id in @($appInsightsIds)) {
     Remove-ResourceById -ResourceId $id
 }
 
-foreach ($id in $storageIds) {
+foreach ($id in @($storageIds)) {
     Remove-ResourceById -ResourceId $id
 }
 
 if ($DeleteResourceGroup) {
-    if ($PSCmdlet.ShouldProcess($resolvedResourceGroupName, 'Delete entire resource group')) {
-        & az group delete --name $resolvedResourceGroupName --yes --no-wait | Out-Null
+    $resourceGroupToDelete = if (-not [string]::IsNullOrWhiteSpace($DeploymentResourceGroupName)) { $DeploymentResourceGroupName } else { $resolvedResourceGroupName }
+    if ($PSCmdlet.ShouldProcess($resourceGroupToDelete, 'Delete entire resource group')) {
+        & az group delete --name $resourceGroupToDelete --yes --no-wait | Out-Null
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to delete resource group: $resolvedResourceGroupName"
+            throw "Failed to delete resource group: $resourceGroupToDelete"
         }
-        Write-Host "Triggered resource group deletion: $resolvedResourceGroupName"
+        Write-Host "Triggered resource group deletion: $resourceGroupToDelete"
     }
 }
 

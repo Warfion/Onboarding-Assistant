@@ -219,7 +219,8 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Parser robustness (nested brackets and escaped pipes) | Complete |
 | Cross-resource-group workspace deployment support | Complete |
 | Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
-| Function test suite | 45 passing |
+| Reset-flow consolidation and split-RG cleanup targeting | Complete |
+| Function test suite | 47 passing |
 | Public GitHub packaging and one-click deploy documentation | Complete |
 
 ---
@@ -232,7 +233,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 
 ### 9.1 Full Reset for Fresh Deployment
 
-If you want a full clean slate, use the reset script below. It auto-discovers the workspace (or accepts explicit inputs), then removes related Onboarding Assistant resources and associated role assignments, and finally attempts to delete discovered managed identity service principals.
+If you want a full clean slate, use the reset script below. It auto-discovers the workspace (or accepts explicit inputs), removes related Onboarding Assistant resources and associated role assignments, and optionally targets a separate deployment resource group when stack resources are hosted outside the workspace resource group.
 
 ```powershell
 ./scripts/Reset-OnboardingAssistantDeployment.ps1 -WhatIf
@@ -244,12 +245,14 @@ Optional switches:
 ```powershell
 ./scripts/Reset-OnboardingAssistantDeployment.ps1 \
   -WorkspaceResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace>" \
+  -DeploymentResourceGroupName "<deployment-rg>" \
   -DeleteResourceGroup
 ```
 
 Notes:
 
 - Use `-WhatIf` first.
+- Use `-DeploymentResourceGroupName` when Logic App / Function / Storage / App Insights were deployed outside the workspace resource group.
 - `-DeleteResourceGroup` is destructive and also removes unrelated resources in that resource group.
 - Service principal deletion requires Microsoft Entra permissions.
 
@@ -283,6 +286,7 @@ Current workspace files:
 | func-watchlist-parser/ParseConnectors/domain-map.json | Domain and subdomain mapping rules |
 | func-watchlist-parser/ParseConnectors/function.json | Function trigger bindings |
 | func-watchlist-parser/ParseConnectors/run.ps1 | Parser implementation |
+| func-watchlist-parser/Tests/DeploymentScripts.Tests.ps1 | Script behavior tests for reset-flow resolution and safe WhatIf/ListOnly paths |
 | func-watchlist-parser/Tests/InfraWorkbook.Tests.ps1 | Infrastructure and workbook deployment validation tests |
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
 | scripts/Reset-OnboardingAssistantDeployment.ps1 | Full reset script that removes related resources, role assignments, and managed identity principals |

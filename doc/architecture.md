@@ -223,6 +223,7 @@ Current resource model in rg-sentinel-001:
 - Infrastructure codified in infra/main.bicep with logic-app-definition.json loaded via loadJsonContent()
 - Workspace-scoped RBAC, Con_Meta, and workbook deployment live in infra/workspace-resources.bicep, deployed to the Sentinel workspace resource group via a nested module
 - Explicit workspace subscription/resource group parameters support cross-resource-group deployments
+- Reset workflow supports split-scope cleanup by allowing explicit deployment resource group targeting (`DeploymentResourceGroupName`) while retaining workspace-scoped cleanup for watchlists/workbook/RBAC.
 - Function package artifact: infra/function-package.zip mounted through WEBSITE_RUN_FROM_PACKAGE
 
 ---

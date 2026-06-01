@@ -6,6 +6,27 @@
 
 ## Done
 
+### ✅ 17 — Reset Flow Consolidation and Split-RG Cleanup Targeting
+
+- tags: [deployment, scripts, tests, sync-docs]
+- priority: high
+- status: complete
+
+```md
+Consolidated cleanup operations into a single reset flow and added deterministic support for split resource group deployments.
+
+DELIVERED:
+✅ Removed standalone stale-assignment cleanup script and consolidated cleanup behavior into scripts/Reset-OnboardingAssistantDeployment.ps1.
+✅ Added WorkspaceName-based workspace resolution support for reset operations.
+✅ Added explicit DeploymentResourceGroupName targeting so stack resources can be cleaned when hosted outside the workspace resource group.
+✅ Added/updated script-level Pester tests for reset-flow resolution, ambiguity handling, and safe dry-run behavior.
+✅ Updated doc/docu.md and doc/architecture.md to reflect the consolidated reset model and split-RG cleanup guidance.
+
+INVENTORY DELTA:
+- Added: func-watchlist-parser/Tests/DeploymentScripts.Tests.ps1
+- Removed: scripts/Cleanup-StaleSentinelContributorAssignments.ps1
+```
+
 ### ✅ 16 — Workbook Discoverability Scope Alignment
 
 - tags: [deployment, workbook, sync-docs]
