@@ -3,6 +3,9 @@ targetScope = 'resourceGroup'
 @description('Name of the Log Analytics workspace with Sentinel')
 param workspaceName string
 
+@description('Deploy the workbook resource into the Sentinel workspace resource group')
+param deployWorkbook bool = true
+
 @description('Principal ID of the Logic App managed identity')
 param logicAppPrincipalId string
 
@@ -13,6 +16,8 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existin
   name: workspaceName
 }
 
+var workbookName = guid(workspace.id, 'onboarding-assistant-workbook')
+
 // --- RBAC: Logic App MI → Microsoft Sentinel Contributor on workspace ---
 // Role ID: ab8e14d6-4a74-4a29-9ba8-549422addade (Microsoft Sentinel Contributor)
 resource sentinelContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -22,6 +27,20 @@ resource sentinelContributorRole 'Microsoft.Authorization/roleAssignments@2022-0
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ab8e14d6-4a74-4a29-9ba8-549422addade')
     principalId: logicAppPrincipalId
     principalType: 'ServicePrincipal'
+  }
+}
+
+resource onboardingWorkbook 'Microsoft.Insights/workbooks@2023-06-01' = if (deployWorkbook) {
+  name: workbookName
+  location: resourceGroup().location
+  kind: 'shared'
+  properties: {
+    category: 'sentinel'
+    displayName: 'Sentinel Data Source Onboarding Assistant'
+    description: 'Workbook for connector discovery, ingestion decision guidance, and connector health.'
+    sourceId: workspace.id
+    version: 'Notebook/1.0'
+    serializedData: loadTextContent('../Onboarding Assistant.workbook')
   }
 }
 
@@ -39,3 +58,5 @@ resource conMetaWatchlist 'Microsoft.SecurityInsights/watchlists@2024-03-01' = {
     rawContent: 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId\ninitial,2026-01-01T00:00:00Z,Pending,,0,0,0,,,${logicAppResourceId}'
   }
 }
+
+output workbookResourceId string = deployWorkbook ? onboardingWorkbook.id : ''

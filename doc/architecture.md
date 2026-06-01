@@ -215,7 +215,7 @@ Security and RBAC:
 Current resource model in rg-sentinel-001:
 
 - Log Analytics workspace with Sentinel enabled
-- Workbook asset: Onboarding Assistant
+- Workbook asset: Onboarding Assistant, saved in the Sentinel workspace resource group
 - Logic App: la-watchlist-refresh
 - Function App: ParseConnectors workload
 - Storage Account and Application Insights for Function runtime

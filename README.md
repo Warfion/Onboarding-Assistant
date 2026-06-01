@@ -85,7 +85,7 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 - Sentinel Contributor role assignment for the Logic App on the target workspace
 - `Con_Meta` watchlist for refresh tracking
 - Function App package mount via `WEBSITE_RUN_FROM_PACKAGE` from `infra/function-package.zip`
-- Shared workbook resource from [Onboarding Assistant.workbook](Onboarding%20Assistant.workbook)
+- Shared workbook resource from [Onboarding Assistant.workbook](Onboarding%20Assistant.workbook), saved in the Sentinel workspace resource group so it appears in Microsoft Sentinel
 
 ## Deployment Steps
 
@@ -104,7 +104,7 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 After the ARM deployment completes, run these validation steps:
 
 1. Verify that the Logic App can invoke the Function App successfully.
-2. Confirm the workbook was created and opens in Microsoft Sentinel Workbooks.
+2. Confirm the workbook was created in the Sentinel workspace resource group and opens in Microsoft Sentinel Workbooks.
 3. Run the Logic App once to populate or refresh the connector watchlists.
 4. Confirm that `Con_Meta` reflects a successful refresh and that the workbook renders expected results.
 

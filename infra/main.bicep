@@ -33,7 +33,6 @@ var storageName = 'stwlparser${uniqueSuffix}'
 var hostingPlanName = 'plan-wl-parser-${uniqueSuffix}'
 var logicAppName = 'la-watchlist-refresh'
 var appInsightsName = 'ai-wl-parser-${uniqueSuffix}'
-var workbookName = guid(workspace.id, 'onboarding-assistant-workbook')
 var refreshSharedSecret = guid(resourceGroup().id, functionAppName, 'refresh-shared-secret')
 
 // --- Existing workspace reference ---
@@ -170,22 +169,9 @@ module workspaceResources './workspace-resources.bicep' = {
   scope: resourceGroup(workspaceSubscriptionId, workspaceResourceGroupName)
   params: {
     workspaceName: workspaceName
+    deployWorkbook: deployWorkbook
     logicAppPrincipalId: logicApp.identity.principalId
     logicAppResourceId: logicApp.id
-  }
-}
-
-resource onboardingWorkbook 'Microsoft.Insights/workbooks@2023-06-01' = if (deployWorkbook) {
-  name: workbookName
-  location: location
-  kind: 'shared'
-  properties: {
-    category: 'sentinel'
-    displayName: 'Sentinel Data Source Onboarding Assistant'
-    description: 'Workbook for connector discovery, ingestion decision guidance, and connector health.'
-    sourceId: workspace.id
-    version: 'Notebook/1.0'
-    serializedData: loadTextContent('../Onboarding Assistant.workbook')
   }
 }
 
@@ -194,4 +180,4 @@ output functionAppName string = functionApp.name
 output functionAppHostName string = functionApp.properties.defaultHostName
 output logicAppName string = logicApp.name
 output logicAppPrincipalId string = logicApp.identity.principalId
-output workbookResourceId string = deployWorkbook ? onboardingWorkbook.id : ''
+output workbookResourceId string = deployWorkbook ? workspaceResources.outputs.workbookResourceId : ''
