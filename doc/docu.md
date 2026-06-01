@@ -231,28 +231,43 @@ This keeps workbook JSON maintainable and traceable during future edits.
 
 If a fresh redeploy recreates the Logic App managed identity, old workspace-scoped role assignments can block deployment with `RoleAssignmentUpdateNotPermitted` or `RoleAssignmentExists`.
 
-Use this cleanup runbook before redeploying:
+Use this generic cleanup script before redeploying:
 
 ```powershell
-$rg = "rg-sentinel-001"
-$ws = "log-sentinel-001"
-$la = "la-watchlist-refresh"
+./scripts/Cleanup-StaleSentinelContributorAssignments.ps1
+```
 
-$subId = az account show --query id -o tsv
-$wsScope = "/subscriptions/$subId/resourceGroups/$rg/providers/Microsoft.OperationalInsights/workspaces/$ws"
-$currentPrincipal = az resource show -g $rg -n $la --resource-type Microsoft.Logic/workflows --query identity.principalId -o tsv
+Optional overrides (only if auto-discovery is ambiguous):
 
-Write-Output "Current Logic App principal: $currentPrincipal"
-
-az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor'].{assignmentId:id,principalId:principalId}" -o table
-
-az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor' && principalId!='$currentPrincipal'].id" -o tsv |
-  ForEach-Object { az role assignment delete --ids $_ }
-
-az role assignment list --scope $wsScope --query "[?roleDefinitionName=='Microsoft Sentinel Contributor'].{assignmentId:id,principalId:principalId}" -o table
+```powershell
+./scripts/Cleanup-StaleSentinelContributorAssignments.ps1 \
+  -WorkspaceResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace>" \
+  -LogicAppResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Logic/workflows/<workflowName>"
 ```
 
 Expected result: only one `Microsoft Sentinel Contributor` assignment remains on the workspace, and its `principalId` matches the current Logic App identity.
+
+### 9.2 Full Reset for Fresh Deployment
+
+If you want a full clean slate, use the reset script below. It auto-discovers the workspace (or accepts explicit inputs), then removes related Onboarding Assistant resources and associated role assignments, and finally attempts to delete discovered managed identity service principals.
+
+```powershell
+./scripts/Reset-OnboardingAssistantDeployment.ps1 -WhatIf
+./scripts/Reset-OnboardingAssistantDeployment.ps1
+```
+
+Optional switches:
+
+```powershell
+./scripts/Reset-OnboardingAssistantDeployment.ps1 \
+  -WorkspaceResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace>" \
+  -DeleteResourceGroup
+```
+
+Notes:
+- Use `-WhatIf` first.
+- `-DeleteResourceGroup` is destructive and also removes unrelated resources in that resource group.
+- Service principal deletion requires Microsoft Entra permissions.
 
 ---
 
@@ -285,6 +300,8 @@ Current workspace files:
 | func-watchlist-parser/ParseConnectors/function.json | Function trigger bindings |
 | func-watchlist-parser/ParseConnectors/run.ps1 | Parser implementation |
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
+| scripts/Cleanup-StaleSentinelContributorAssignments.ps1 | Generic RBAC cleanup script for stale Sentinel Contributor assignments |
+| scripts/Reset-OnboardingAssistantDeployment.ps1 | Full reset script that removes related resources, role assignments, and managed identity principals |
 | infra/function-package.zip | Function package artifact used by WEBSITE_RUN_FROM_PACKAGE |
 | infra/logic-app-definition.json | Logic App workflow definition |
 | infra/main.bicep | Infrastructure as code source |
