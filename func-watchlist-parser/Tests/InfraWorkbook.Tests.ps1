@@ -2,10 +2,12 @@ BeforeAll {
     $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
     $script:mainBicepPath = Join-Path $repoRoot 'infra/main.bicep'
+    $script:workspaceResourcesBicepPath = Join-Path $repoRoot 'infra/workspace-resources.bicep'
     $script:logicAppDefinitionPath = Join-Path $repoRoot 'infra/logic-app-definition.json'
     $script:workbookPath = Join-Path $repoRoot 'Onboarding Assistant.workbook'
 
     $script:mainBicepRaw = Get-Content -Path $script:mainBicepPath -Raw
+    $script:workspaceResourcesBicepRaw = Get-Content -Path $script:workspaceResourcesBicepPath -Raw
     $script:logicAppDefinition = Get-Content -Path $script:logicAppDefinitionPath -Raw | ConvertFrom-Json
     $script:workbookRaw = Get-Content -Path $script:workbookPath -Raw
     $script:workbook = $script:workbookRaw | ConvertFrom-Json
@@ -13,11 +15,11 @@ BeforeAll {
 
 Describe 'Con_Meta seed metadata in Bicep' {
     It 'Includes LogicAppResourceId in the seeded Con_Meta CSV header' {
-        $script:mainBicepRaw | Should -Match 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId'
+        $script:workspaceResourcesBicepRaw | Should -Match 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId'
     }
 
     It 'Seeds the initial LogicAppResourceId value from logicApp.id' {
-        $script:mainBicepRaw | Should -Match 'initial,2026-01-01T00:00:00Z,Pending,,0,0,0,,,\$\{logicApp\.id\}'
+        $script:workspaceResourcesBicepRaw | Should -Match 'initial,2026-01-01T00:00:00Z,Pending,,0,0,0,,,\$\{logicAppResourceId\}'
     }
 }
 

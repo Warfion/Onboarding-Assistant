@@ -2,6 +2,7 @@
 param(
     [string]$SubscriptionId,
     [string]$WorkspaceResourceId,
+    [string]$WorkspaceName,
     [string]$ResourceGroupName,
     [string]$LogicAppName = 'la-watchlist-refresh',
     [switch]$DeleteResourceGroup,
@@ -65,6 +66,7 @@ function Parse-ResourceId {
 function Resolve-WorkspaceResourceId {
     param(
         [string]$ExplicitWorkspaceResourceId,
+        [string]$ExplicitWorkspaceName,
         [string]$ExplicitResourceGroupName
     )
 
@@ -73,11 +75,17 @@ function Resolve-WorkspaceResourceId {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitResourceGroupName)) {
+        $workspaceQuery = if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
+            "[?name=='$ExplicitWorkspaceName'].id"
+        } else {
+            '[].id'
+        }
+
         $workspaces = @(Invoke-AzJson -Arguments @(
                 'resource', 'list',
                 '-g', $ExplicitResourceGroupName,
                 '--resource-type', 'Microsoft.OperationalInsights/workspaces',
-                '--query', '[].id',
+                '--query', $workspaceQuery,
                 '-o', 'json'
             ))
 
@@ -87,6 +95,45 @@ function Resolve-WorkspaceResourceId {
 
         if ($workspaces.Count -gt 1) {
             Write-Host "Multiple workspaces found in resource group '$ExplicitResourceGroupName'. Re-run with -WorkspaceResourceId:" -ForegroundColor Yellow
+            $workspaces | ForEach-Object { Write-Host " - $_" }
+            throw 'Workspace resolution is ambiguous.'
+        }
+
+        return $workspaces[0]
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
+        $subscriptionIds = @(Invoke-AzJson -Arguments @(
+                'account', 'list',
+                '--query', "[?state=='Enabled'].id",
+                '-o', 'json'
+            ))
+
+        $workspaceMatches = @()
+        foreach ($subId in $subscriptionIds) {
+            $ids = @(Invoke-AzJson -Arguments @(
+                    'resource', 'list',
+                    '--subscription', $subId,
+                    '--resource-type', 'Microsoft.OperationalInsights/workspaces',
+                    '--query', "[?name=='$ExplicitWorkspaceName'].id",
+                    '-o', 'json'
+                ))
+
+            foreach ($id in $ids) {
+                if (-not [string]::IsNullOrWhiteSpace($id)) {
+                    $workspaceMatches += $id
+                }
+            }
+        }
+
+        $workspaces = @($workspaceMatches | Sort-Object -Unique)
+
+        if ($workspaces.Count -eq 0) {
+            throw "No workspace discovered with name '$ExplicitWorkspaceName'. Provide -WorkspaceResourceId explicitly."
+        }
+
+        if ($workspaces.Count -gt 1) {
+            Write-Host "Multiple workspaces found with name '$ExplicitWorkspaceName'. Re-run with -WorkspaceResourceId:" -ForegroundColor Yellow
             $workspaces | ForEach-Object { Write-Host " - $_" }
             throw 'Workspace resolution is ambiguous.'
         }
@@ -105,14 +152,21 @@ resources
 "@
 
     $result = Invoke-AzJson -Arguments @('graph', 'query', '-q', $query, '--first', '1000', '-o', 'json')
-    $workspaces = @($result.data | ForEach-Object { $_.workspaceResourceId })
+    $rows = @($result.data)
+    $workspaces = @()
+    foreach ($row in $rows) {
+        $id = ($row | Select-Object -ExpandProperty workspaceResourceId -ErrorAction SilentlyContinue)
+        if (-not [string]::IsNullOrWhiteSpace($id)) {
+            $workspaces += $id
+        }
+    }
 
     if ($workspaces.Count -eq 0) {
         throw 'No Sentinel-enabled workspace discovered. Provide -WorkspaceResourceId explicitly.'
     }
 
     if ($workspaces.Count -gt 1) {
-        Write-Host 'Multiple Sentinel-enabled workspaces found. Re-run with -WorkspaceResourceId:' -ForegroundColor Yellow
+        Write-Host 'Multiple Sentinel-enabled workspaces found. Re-run with -WorkspaceResourceId (or provide -WorkspaceName with -ResourceGroupName):' -ForegroundColor Yellow
         $workspaces | ForEach-Object { Write-Host " - $_" }
         throw 'Workspace resolution is ambiguous.'
     }
@@ -186,7 +240,7 @@ if (-not [string]::IsNullOrWhiteSpace($SubscriptionId)) {
     }
 }
 
-$resolvedWorkspaceId = Resolve-WorkspaceResourceId -ExplicitWorkspaceResourceId $WorkspaceResourceId -ExplicitResourceGroupName $ResourceGroupName
+$resolvedWorkspaceId = Resolve-WorkspaceResourceId -ExplicitWorkspaceResourceId $WorkspaceResourceId -ExplicitWorkspaceName $WorkspaceName -ExplicitResourceGroupName $ResourceGroupName
 $parsed = Parse-ResourceId -ResourceId $resolvedWorkspaceId
 $resolvedSubscriptionId = $parsed.SubscriptionId
 $resolvedResourceGroupName = $parsed.ResourceGroupName
