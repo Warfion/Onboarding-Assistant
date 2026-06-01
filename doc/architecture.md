@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.3
-Updated: 2026-05-29
+Version: 2.4
+Updated: 2026-06-01
 
 ---
 
@@ -18,7 +18,7 @@ The solution consists of four runtime planes:
 
 ## 2. High-Level Topology
 
-```
+```text
 Azure Portal
   └─ Microsoft Sentinel Workbook: Onboarding Assistant
      ├─ Tab 1: Available Data Connectors
@@ -29,6 +29,9 @@ Workbook data dependencies
   ├─ _GetWatchlist('Con')      -> connector catalog, domains, subdomains
   ├─ _GetWatchlist('Con_Meta') -> last refresh status card
   └─ SentinelHealth            -> health, freshness, maturity, recommendations
+
+Deployment scope
+  └─ Workspace can live in a different subscription/resource group than the deployment stack
 
 Refresh pipeline (weekly + on-demand)
   Logic App la-watchlist-refresh
@@ -42,7 +45,7 @@ Refresh pipeline (weekly + on-demand)
 
 ## 3. Workbook Layout Model
 
-```
+```text
 Global parameters
   Subscription | Workspace | WorkspaceEligible | Help | Tab
 
@@ -72,7 +75,7 @@ Tab 3 group: group-InstalledConnectors
 
 ### 4.1 Question Path
 
-```
+```text
 Q1 Listed in Content Hub?
   Yes -> Q2 Built-in available?
     Yes -> Built-in Connector
@@ -136,7 +139,7 @@ Priority model:
 
 ### 5.3 Drilldown Path
 
-```
+```text
 Coverage by Domain and Subdomain table
   -> export SelectedSubdomain
   -> show StatusFilter (All | Installed | Not installed)
@@ -172,7 +175,7 @@ Implementation notes:
 
 ## 7. Refresh Pipeline Design
 
-```
+```text
 Trigger paths
   A) Weekly recurrence in Logic App
   B) Manual trigger from workbook button (ARM action)
@@ -190,6 +193,10 @@ Workflow
 
 - Default targeting mode: resolves the workflow resource ID from the latest Con_Meta row (LogicAppResourceId) for the selected workspace, then triggers that workflow. If the field is unavailable, fallback targeting derives subscription and resource group from the selected workspace.
 - Override targeting mode: uses an operator-selected Logic App workflow resource for cross-resource-group deployments where the refresh workflow is hosted outside the workspace resource group.
+
+Deployment note:
+
+- The infrastructure template accepts explicit workspace subscription and workspace resource group parameters so the workspace can be deployed independently from the Logic App/Function stack.
 
 Operator guidance:
 
@@ -214,6 +221,8 @@ Current resource model in rg-sentinel-001:
 - Storage Account and Application Insights for Function runtime
 - Watchlists: Con and Con_Meta
 - Infrastructure codified in infra/main.bicep with logic-app-definition.json loaded via loadJsonContent()
+- Workspace-scoped RBAC and Con_Meta deployment live in infra/workspace-resources.bicep, deployed to the Sentinel workspace resource group via a nested module
+- Explicit workspace subscription/resource group parameters support cross-resource-group deployments
 - Function package artifact: infra/function-package.zip mounted through WEBSITE_RUN_FROM_PACKAGE
 
 ---
@@ -236,6 +245,10 @@ The workbook and parser contract is the 12-column watchlist schema below and mus
 - Domain
 - Subdomain
 - Connector ID
+
+### 9.3 Deployment Consistency Note
+
+The Bicep deployment parameters for workspace subscription/resource group must remain aligned with the deployment guidance in doc/docu.md and README.md whenever the workspace is hosted outside the stack resource group.
 
 ### 9.2 Draw.io Alignment Note
 

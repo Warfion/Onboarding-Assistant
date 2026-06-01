@@ -6,6 +6,12 @@
 @description('Name of the Log Analytics workspace with Sentinel')
 param workspaceName string
 
+@description('Subscription that contains the Log Analytics workspace')
+param workspaceSubscriptionId string = subscription().subscriptionId
+
+@description('Resource group that contains the Log Analytics workspace')
+param workspaceResourceGroupName string = resourceGroup().name
+
 @description('Resource group location')
 param location string = resourceGroup().location
 
@@ -33,6 +39,7 @@ var refreshSharedSecret = guid(resourceGroup().id, functionAppName, 'refresh-sha
 // --- Existing workspace reference ---
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
   name: workspaceName
+  scope: resourceGroup(workspaceSubscriptionId, workspaceResourceGroupName)
 }
 
 // --- Storage Account (for Function App) ---
@@ -140,10 +147,10 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         value: refreshSharedSecret
       }
       subscriptionId: {
-        value: subscription().subscriptionId
+        value: workspaceSubscriptionId
       }
       resourceGroupName: {
-        value: resourceGroup().name
+        value: workspaceResourceGroupName
       }
       workspaceName: {
         value: workspaceName
@@ -158,30 +165,13 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   }
 }
 
-// --- RBAC: Logic App MI → Microsoft Sentinel Contributor on workspace ---
-// Role ID: ab8e14d6-4a74-4a29-9ba8-549422addade (Microsoft Sentinel Contributor)
-resource sentinelContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(workspace.id, logicApp.name, 'ab8e14d6-4a74-4a29-9ba8-549422addade', 'v2')
-  scope: workspace
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ab8e14d6-4a74-4a29-9ba8-549422addade')
-    principalId: logicApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// --- Con_Meta watchlist (refresh status tracking) ---
-resource conMetaWatchlist 'Microsoft.SecurityInsights/watchlists@2024-03-01' = {
-  name: 'Con_Meta'
-  scope: workspace
-  properties: {
-    displayName: 'Connector Catalog Metadata'
-    description: 'Tracks refresh status of the Con watchlist (1 row, upserted each run)'
-    provider: 'Onboarding Assistant'
-    source: 'watchlist'
-    itemsSearchKey: 'RunId'
-    contentType: 'Text/Csv'
-    rawContent: 'RunId,Timestamp,Result,SourceVersion,ActiveCount,DeprecatedCount,TotalCount,FailureStage,ErrorSummary,LogicAppResourceId\ninitial,2026-01-01T00:00:00Z,Pending,,0,0,0,,,${logicApp.id}'
+module workspaceResources './workspace-resources.bicep' = {
+  name: 'workspaceResources'
+  scope: resourceGroup(workspaceSubscriptionId, workspaceResourceGroupName)
+  params: {
+    workspaceName: workspaceName
+    logicAppPrincipalId: logicApp.identity.principalId
+    logicAppResourceId: logicApp.id
   }
 }
 

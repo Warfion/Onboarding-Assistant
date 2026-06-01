@@ -6,6 +6,27 @@
 
 ## Done
 
+### ✅ 15 — Cross-Resource-Group Workspace Deployment Support
+
+- tags: [deployment, infrastructure, workbook, sync-docs]
+- priority: high
+- status: complete
+
+```md
+Enabled deployments where the Sentinel workspace lives in a different subscription or resource group than the deployment stack.
+
+DELIVERED:
+✅ Added explicit workspaceSubscriptionId and workspaceResourceGroupName deployment parameters in infra/main.bicep.
+✅ Scoped the existing Log Analytics workspace reference to the selected workspace subscription and resource group.
+✅ Passed the actual workspace subscription/resource group into the Logic App refresh workflow parameters.
+✅ Updated README.md, doc/docu.md, and doc/architecture.md to document the cross-resource-group deployment path.
+✅ Rebuilt the deployment template so the Deploy to Azure button targets the workspace correctly.
+
+INVENTORY DELTA:
+- Added: infra/workspace-resources.bicep
+- Removed: none
+```
+
 ### ✅ 7 — GitHub Repo + README with Deploy to Azure Button
 
   - tags: [deployment, github, documentation]

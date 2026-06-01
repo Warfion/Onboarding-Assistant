@@ -22,17 +22,28 @@ function Invoke-AzJson {
         [string[]]$Arguments
     )
 
-    $output = & az @Arguments 2>&1
+    $output = & az @Arguments --only-show-errors 2>&1
     if ($LASTEXITCODE -ne 0) {
         $joined = $Arguments -join ' '
         throw "Azure CLI command failed: az $joined`n$output"
     }
 
-    if ([string]::IsNullOrWhiteSpace(($output | Out-String))) {
+    $text = ($output | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($text)) {
         return $null
     }
 
-    return ($output | Out-String) | ConvertFrom-Json
+    $jsonStart = [Math]::Min(
+        (@($text.IndexOf('{'), $text.IndexOf('[')) | Where-Object { $_ -ge 0 } | Measure-Object -Minimum).Minimum,
+        [int]::MaxValue
+    )
+
+    if ($jsonStart -eq [int]::MaxValue) {
+        throw "Azure CLI returned non-JSON output for: az $($Arguments -join ' ')`n$text"
+    }
+
+    $jsonText = $text.Substring($jsonStart)
+    return $jsonText | ConvertFrom-Json
 }
 
 function Get-SubscriptionIdFromResourceId {

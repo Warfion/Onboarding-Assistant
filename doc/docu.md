@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.3
-Last Updated: 2026-05-29
+Version: 2.4
+Last Updated: 2026-06-01
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -32,6 +32,7 @@ The workbook has three tabs:
 | Health Source | SentinelHealth table | Last 7 days connector status/freshness telemetry |
 | Catalog Origin | oshezaf/sentinelninja | Parsed from GitHub content by Azure Function |
 | Automation | Logic App + Azure Function | Weekly refresh with atomic watchlist update |
+| Deployment Scope | Cross-resource-group supported | Explicit workspaceSubscriptionId and workspaceResourceGroupName parameters in infra/main.bicep |
 | Fallback Resource | Log Analytics Workspace | log-sentinel-001 in rg-sentinel-001 |
 
 ---
@@ -216,7 +217,8 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Workspace eligibility gating (Sentinel + Con_Meta readiness) | Complete |
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
-| Function test suite | 33 passing |
+| Cross-resource-group workspace deployment support | Complete |
+| Function test suite | 45 passing |
 | Public GitHub packaging and one-click deploy documentation | Complete |
 
 ---
@@ -265,6 +267,7 @@ Optional switches:
 ```
 
 Notes:
+
 - Use `-WhatIf` first.
 - `-DeleteResourceGroup` is destructive and also removes unrelated resources in that resource group.
 - Service principal deletion requires Microsoft Entra permissions.
@@ -302,6 +305,7 @@ Current workspace files:
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
 | scripts/Cleanup-StaleSentinelContributorAssignments.ps1 | Generic RBAC cleanup script for stale Sentinel Contributor assignments |
 | scripts/Reset-OnboardingAssistantDeployment.ps1 | Full reset script that removes related resources, role assignments, and managed identity principals |
+| infra/workspace-resources.bicep | Workspace-scoped module for Sentinel RBAC and Con_Meta watchlist deployment |
 | infra/function-package.zip | Function package artifact used by WEBSITE_RUN_FROM_PACKAGE |
 | infra/logic-app-definition.json | Logic App workflow definition |
 | infra/main.bicep | Infrastructure as code source |

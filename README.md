@@ -20,6 +20,8 @@ The solution is organized around three workbook tabs:
 
 Under the hood, a Logic App calls an Azure Function that parses the connector source catalog, emits a 12-column CSV payload, and updates Sentinel watchlists atomically.
 
+The deployment supports workspaces in a different subscription or resource group from the deployment stack when you provide explicit workspace scope parameters.
+
 ## Screenshots
 
 Add the final screenshots here once the workbook UX is frozen.
@@ -64,6 +66,8 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 ### Parameters exposed
 
 - `workspaceName`: Existing Log Analytics workspace name with Sentinel enabled.
+- `workspaceSubscriptionId`: Subscription containing the Sentinel workspace. Defaults to the deployment subscription.
+- `workspaceResourceGroupName`: Resource group containing the Sentinel workspace. Defaults to the deployment resource group.
 - `location`: Azure region for the deployed resources.
 - `uniqueSuffix`: Optional unique naming suffix derived from the resource group by default.
 - `alertWebhookUrl`: Optional webhook endpoint for failure notifications.
@@ -87,9 +91,10 @@ The button above deploys the Azure infrastructure from [infra/main.bicep](infra/
 
 1. Select the Deploy to Azure button.
 2. Choose the subscription, resource group, and deployment location.
-3. Enter the Sentinel workspace name and optional alert webhook URL.
-4. Review the role assignment impact and start the deployment.
-5. Wait for the infrastructure deployment to complete.
+3. Enter the Sentinel workspace name and, if needed, the workspace subscription and resource group.
+4. Enter the optional alert webhook URL.
+5. Review the role assignment impact and start the deployment.
+6. Wait for the infrastructure deployment to complete.
 
 ## Post-Deployment Configuration
 
@@ -142,6 +147,7 @@ The current repository layout is:
     |-- function-package.zip
     |-- logic-app-definition.json
     |-- main.bicep
+    |-- workspace-resources.bicep
     `-- main.json
 ```
 
