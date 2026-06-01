@@ -6,6 +6,27 @@
 
 ## Done
 
+### ✅ 16 — Workbook Discoverability Scope Alignment
+
+- tags: [deployment, workbook, sync-docs]
+- priority: high
+- status: complete
+
+```md
+Aligned workbook deployment scope with Microsoft Sentinel discoverability requirements.
+
+DELIVERED:
+✅ Moved workbook resource deployment into infra/workspace-resources.bicep so it is created in the Sentinel workspace resource group.
+✅ Removed workbook deployment from infra/main.bicep stack resource group scope.
+✅ Rebuilt infra/main.json from infra/main.bicep.
+✅ Updated README.md, doc/docu.md, and doc/architecture.md to reflect workspace-scoped workbook placement.
+✅ Added doc/decision-tree.drawio manual-update flag for topology parity (workbook now originates from workspace-scoped module).
+
+INVENTORY DELTA:
+- Added: none
+- Removed: none
+```
+
 ### ✅ 15 — Cross-Resource-Group Workspace Deployment Support
 
 - tags: [deployment, infrastructure, workbook, sync-docs]

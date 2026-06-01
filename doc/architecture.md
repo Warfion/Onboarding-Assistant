@@ -221,7 +221,7 @@ Current resource model in rg-sentinel-001:
 - Storage Account and Application Insights for Function runtime
 - Watchlists: Con and Con_Meta
 - Infrastructure codified in infra/main.bicep with logic-app-definition.json loaded via loadJsonContent()
-- Workspace-scoped RBAC and Con_Meta deployment live in infra/workspace-resources.bicep, deployed to the Sentinel workspace resource group via a nested module
+- Workspace-scoped RBAC, Con_Meta, and workbook deployment live in infra/workspace-resources.bicep, deployed to the Sentinel workspace resource group via a nested module
 - Explicit workspace subscription/resource group parameters support cross-resource-group deployments
 - Function package artifact: infra/function-package.zip mounted through WEBSITE_RUN_FROM_PACKAGE
 
@@ -253,6 +253,10 @@ The Bicep deployment parameters for workspace subscription/resource group must r
 ### 9.2 Draw.io Alignment Note
 
 The decision diagram in doc/decision-tree.drawio should remain functionally aligned with section 4. Manual refresh can be performed when visual labels or notation style need parity with workbook wording.
+
+Manual update required for topology parity:
+
+- Update the deployment topology diagram to show workbook creation under the Sentinel workspace resource group via infra/workspace-resources.bicep.
 
 ---
 

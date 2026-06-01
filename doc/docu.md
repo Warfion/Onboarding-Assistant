@@ -218,6 +218,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
 | Cross-resource-group workspace deployment support | Complete |
+| Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
 | Function test suite | 45 passing |
 | Public GitHub packaging and one-click deploy documentation | Complete |
 
@@ -229,27 +230,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 |---|---|---|
 | None currently tracked | N/A | N/A |
 
-### 9.1 Fresh Redeploy RBAC Cleanup (When Identity Is Recreated)
-
-If a fresh redeploy recreates the Logic App managed identity, old workspace-scoped role assignments can block deployment with `RoleAssignmentUpdateNotPermitted` or `RoleAssignmentExists`.
-
-Use this generic cleanup script before redeploying:
-
-```powershell
-./scripts/Cleanup-StaleSentinelContributorAssignments.ps1
-```
-
-Optional overrides (only if auto-discovery is ambiguous):
-
-```powershell
-./scripts/Cleanup-StaleSentinelContributorAssignments.ps1 \
-  -WorkspaceResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace>" \
-  -LogicAppResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.Logic/workflows/<workflowName>"
-```
-
-Expected result: only one `Microsoft Sentinel Contributor` assignment remains on the workspace, and its `principalId` matches the current Logic App identity.
-
-### 9.2 Full Reset for Fresh Deployment
+### 9.1 Full Reset for Fresh Deployment
 
 If you want a full clean slate, use the reset script below. It auto-discovers the workspace (or accepts explicit inputs), then removes related Onboarding Assistant resources and associated role assignments, and finally attempts to delete discovered managed identity service principals.
 
@@ -302,10 +283,10 @@ Current workspace files:
 | func-watchlist-parser/ParseConnectors/domain-map.json | Domain and subdomain mapping rules |
 | func-watchlist-parser/ParseConnectors/function.json | Function trigger bindings |
 | func-watchlist-parser/ParseConnectors/run.ps1 | Parser implementation |
+| func-watchlist-parser/Tests/InfraWorkbook.Tests.ps1 | Infrastructure and workbook deployment validation tests |
 | func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 | Parser test suite |
-| scripts/Cleanup-StaleSentinelContributorAssignments.ps1 | Generic RBAC cleanup script for stale Sentinel Contributor assignments |
 | scripts/Reset-OnboardingAssistantDeployment.ps1 | Full reset script that removes related resources, role assignments, and managed identity principals |
-| infra/workspace-resources.bicep | Workspace-scoped module for Sentinel RBAC and Con_Meta watchlist deployment |
+| infra/workspace-resources.bicep | Workspace-scoped module for Sentinel RBAC, Con_Meta watchlist, and workbook deployment |
 | infra/function-package.zip | Function package artifact used by WEBSITE_RUN_FROM_PACKAGE |
 | infra/logic-app-definition.json | Logic App workflow definition |
 | infra/main.bicep | Infrastructure as code source |
