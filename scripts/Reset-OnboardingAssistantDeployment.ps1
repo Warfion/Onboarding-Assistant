@@ -320,8 +320,8 @@ function Remove-ResourceById {
     }
 
     if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
-        Write-Host "Deleting resource: $ResourceId"
-        $deleteOutput = & az resource delete --ids $ResourceId -o none 2>&1
+        Write-Host "Deleting resource (async): $ResourceId"
+        $deleteOutput = & az resource delete --ids $ResourceId --no-wait -o none 2>&1
         if ($LASTEXITCODE -ne 0) {
             $details = ($deleteOutput | Out-String).Trim()
             if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
@@ -331,7 +331,7 @@ function Remove-ResourceById {
             }
             throw "Failed to delete resource: $ResourceId"
         }
-        Write-Host "Deleted resource: $ResourceId"
+        Write-Host "Delete queued: $ResourceId"
     }
 }
 
@@ -566,5 +566,5 @@ if (-not $SkipPrincipalDeletion) {
 }
 
 Write-Host ''
-Write-Host 'Reset flow completed.' -ForegroundColor Green
+Write-Host 'Reset flow completed. Resource deletions are async — verify in the Azure portal.' -ForegroundColor Green
 Write-Host 'Tip: run with -WhatIf first to preview destructive operations.' -ForegroundColor Cyan
