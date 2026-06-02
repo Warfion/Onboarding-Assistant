@@ -320,7 +320,15 @@ function Remove-ResourceById {
 
     if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
         Write-Host "Deleting resource (async): $ResourceId"
-        $deleteOutput = & az resource delete --ids $ResourceId --no-wait -o none 2>&1
+
+        # Sentinel watchlists require an explicit API version; generic
+        # az-resource-delete fails without one.
+        $deleteArgs = @('resource', 'delete', '--ids', $ResourceId, '--no-wait', '-o', 'none')
+        if ($ResourceId -match 'Microsoft\.SecurityInsights/watchlists') {
+            $deleteArgs += @('--api-version', '2024-03-01')
+        }
+
+        $deleteOutput = & az @deleteArgs 2>&1
         if ($LASTEXITCODE -ne 0) {
             $details = ($deleteOutput | Out-String).Trim()
             if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
