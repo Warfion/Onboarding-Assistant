@@ -332,14 +332,16 @@ function Remove-ResourceById {
 
         if ($LASTEXITCODE -ne 0) {
             $details = ($deleteOutput | Out-String).Trim()
-            if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
+            if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge|Unauthorized|RequestDisallowedByAzure') {
                 Write-Warning "Resource deletion failed due to authentication issue: $ResourceId"
                 Write-Warning "Run 'az login' to re-authenticate, then retry."
                 return
             }
-            # Treat not-found and any other non-auth error as non-fatal — the
-            # resource may already be gone or the provider may return an
-            # unexpected error shape.  Log details so the user can investigate.
+            if ($details -match 'Not Found|does not exist|ResourceNotFound|could not be found') {
+                Write-Verbose "Resource already deleted (skipping): $ResourceId"
+                return
+            }
+            # Any other non-auth, non-404 error is non-fatal.
             Write-Warning "Could not delete resource (continuing): $ResourceId"
             if ($details) { Write-Verbose "Delete error details: $details" }
             return
