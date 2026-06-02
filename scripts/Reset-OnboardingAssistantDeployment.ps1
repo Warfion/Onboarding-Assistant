@@ -387,6 +387,11 @@ if (-not [string]::IsNullOrWhiteSpace($SubscriptionId)) {
 }
 
 Write-Host "Starting Reset-OnboardingAssistantDeployment..." -ForegroundColor Cyan
+
+if ($Force -and $WhatIfPreference) {
+    throw '-Force and -WhatIf cannot be used together. Use -WhatIf alone for a dry-run preview, or -Force alone to skip confirmations.'
+}
+
 Write-Verbose "Parameters: WorkspaceName='$WorkspaceName' WorkspaceResourceId='$WorkspaceResourceId' ResourceGroupName='$ResourceGroupName' DeploymentResourceGroupName='$DeploymentResourceGroupName'"
 Write-Verbose "Resolving workspace..."
 
@@ -570,5 +575,9 @@ if (-not $SkipPrincipalDeletion) {
 }
 
 Write-Host ''
-Write-Host 'Reset flow completed. Resource deletions are async — verify in the Azure portal.' -ForegroundColor Green
-Write-Host 'Tip: run with -WhatIf first to preview destructive operations.' -ForegroundColor Cyan
+if ($WhatIfPreference) {
+    Write-Host 'WhatIf preview completed. No resources were modified.' -ForegroundColor Green
+} else {
+    Write-Host 'Reset flow completed. Resource deletions are async — verify in the Azure portal.' -ForegroundColor Green
+    Write-Host 'Tip: run with -WhatIf first to preview destructive operations.' -ForegroundColor Cyan
+}
