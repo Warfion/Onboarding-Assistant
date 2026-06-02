@@ -1,2 +1,5 @@
 # Local encrypted secrets used by developer tooling
 .vscode/.secrets/
+
+# Developer tooling — not required to install or operate the solution
+scripts/context7/
