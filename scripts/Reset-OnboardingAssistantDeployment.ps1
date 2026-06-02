@@ -495,10 +495,16 @@ $workbookIds = @(Invoke-AzJson -Arguments @(
         '-o', 'json'
     ))
 
-$watchlistIds = @(
-    "$resolvedWorkspaceId/providers/Microsoft.SecurityInsights/watchlists/Con",
-    "$resolvedWorkspaceId/providers/Microsoft.SecurityInsights/watchlists/Con_Meta"
-)
+$watchlistNames = @('Con', 'Con_Meta')
+$watchlistIds = @()
+foreach ($wlName in $watchlistNames) {
+    $wlId = "$resolvedWorkspaceId/providers/Microsoft.SecurityInsights/watchlists/$wlName"
+    $uri = "https://management.azure.com${wlId}?api-version=2024-03-01"
+    $null = & az rest --method GET --uri $uri -o none 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $watchlistIds += $wlId
+    }
+}
 
 $principalIds = [System.Collections.Generic.HashSet[string]]::new()
 foreach ($id in @(@($logicAppIds) + @($functionAppIds))) {
@@ -515,7 +521,7 @@ Write-Host " - App Service Plans: $(@($planIds).Count)"
 Write-Host " - Application Insights: $(@($appInsightsIds).Count)"
 Write-Host " - Storage Accounts: $(@($storageIds).Count)"
 Write-Host " - Workbooks: $($workbookIds.Count)"
-Write-Host " - Watchlists to check: $($watchlistIds.Count)"
+Write-Host " - Watchlists: $($watchlistIds.Count)"
 Write-Host " - Managed identity principals discovered: $($principalIds.Count)"
 
 if (-not $SkipSentinelContributorCleanup) {
