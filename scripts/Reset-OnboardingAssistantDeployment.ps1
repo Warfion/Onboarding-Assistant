@@ -85,10 +85,12 @@ function Resolve-WorkspaceResourceId {
     )
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceResourceId)) {
+        Write-Verbose "Using explicitly provided workspace resource ID."
         return $ExplicitWorkspaceResourceId
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitResourceGroupName)) {
+        Write-Verbose "Resolving workspace from resource group '$ExplicitResourceGroupName'..."
         $workspaceQuery = if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
             "[?name=='$ExplicitWorkspaceName'].id"
         } else {
@@ -117,14 +119,17 @@ function Resolve-WorkspaceResourceId {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
+        Write-Verbose "Resolving workspace by name '$ExplicitWorkspaceName' across all enabled subscriptions..."
         $subscriptionIds = @(Invoke-AzJson -Arguments @(
                 'account', 'list',
                 '--query', "[?state=='Enabled'].id",
                 '-o', 'json'
             ))
+        Write-Verbose "Scanning $($subscriptionIds.Count) subscription(s)..."
 
         $workspaceMatches = @()
         foreach ($subId in $subscriptionIds) {
+            Write-Verbose "  Scanning subscription: $subId"
             $ids = @(Invoke-AzJson -Arguments @(
                     'resource', 'list',
                     '--subscription', $subId,
@@ -155,6 +160,10 @@ function Resolve-WorkspaceResourceId {
         return $workspaces[0]
     }
 
+    Write-Verbose "No workspace parameter provided. Auto-discovering Sentinel-enabled workspaces via Resource Graph..."
+    Write-Verbose "Ensuring az resource-graph extension is available..."
+    & az extension add --name resource-graph --upgrade --only-show-errors -y 2>$null | Out-Null
+
     $query = @"
 resources
 | where type =~ 'microsoft.operationsmanagement/solutions'
@@ -166,6 +175,7 @@ resources
 "@
 
     $result = Invoke-AzJson -Arguments @('graph', 'query', '-q', $query, '--first', '1000', '-o', 'json')
+    Write-Verbose "Resource Graph query returned $(@($result.data).Count) row(s)."
     $rows = @($result.data)
     $workspaces = @()
     foreach ($row in $rows) {
@@ -368,6 +378,10 @@ if (-not [string]::IsNullOrWhiteSpace($SubscriptionId)) {
         throw "Failed to set Azure subscription: $SubscriptionId"
     }
 }
+
+Write-Host "Starting Reset-OnboardingAssistantDeployment..." -ForegroundColor Cyan
+Write-Verbose "Parameters: WorkspaceName='$WorkspaceName' WorkspaceResourceId='$WorkspaceResourceId' ResourceGroupName='$ResourceGroupName' DeploymentResourceGroupName='$DeploymentResourceGroupName'"
+Write-Verbose "Resolving workspace..."
 
 $resolvedWorkspaceId = Resolve-WorkspaceResourceId -ExplicitWorkspaceResourceId $WorkspaceResourceId -ExplicitWorkspaceName $WorkspaceName -ExplicitResourceGroupName $ResourceGroupName
 $parsed = Parse-ResourceId -ResourceId $resolvedWorkspaceId
