@@ -504,6 +504,13 @@ try {
                 if (-not [string]::IsNullOrWhiteSpace($wbId)) { $workbookIds += $wbId }
             }
         }
+    } else {
+        $wbDetails = ($wbOutput | Out-String).Trim()
+        if ($wbDetails -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge|Unauthorized|RequestDisallowedByAzure') {
+            Write-Verbose "Could not query workbooks: authentication issue (CAP/MFA). Run from Cloud Shell or re-authenticate."
+        } else {
+            Write-Verbose "Could not query workbooks: $wbDetails"
+        }
     }
 } catch {
     Write-Verbose "Could not query workbooks: $($_.Exception.Message)"
