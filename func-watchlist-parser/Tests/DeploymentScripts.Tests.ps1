@@ -7,6 +7,7 @@ BeforeAll {
 
         switch ($global:AzScenario) {
             'Reset-WorkspaceName-Success' {
+                if ($Command -match 'account show') { return '"sub-1"' }
                 if ($Command -match 'account list') { return '["sub-1"]' }
                 if ($Command -match 'resource list --subscription sub-1 --resource-type Microsoft\.OperationalInsights/workspaces') {
                     return '["/subscriptions/sub-1/resourceGroups/rg-sentinel-001/providers/Microsoft.OperationalInsights/workspaces/log-sentinel-001"]'
@@ -31,6 +32,7 @@ BeforeAll {
             }
 
             'Reset-WorkspaceName-Ambiguous' {
+                if ($Command -match 'account show') { return '"sub-1"' }
                 if ($Command -match 'account list') { return '["sub-1"]' }
                 if ($Command -match 'resource list --subscription sub-1 --resource-type Microsoft\.OperationalInsights/workspaces') {
                     return '["/subscriptions/sub-1/resourceGroups/rg-a/providers/Microsoft.OperationalInsights/workspaces/shared-name","/subscriptions/sub-1/resourceGroups/rg-b/providers/Microsoft.OperationalInsights/workspaces/shared-name"]'
@@ -61,7 +63,7 @@ Describe 'Reset-OnboardingAssistantDeployment script' {
         $global:AzScenario = 'Reset-WorkspaceName-Success'
 
         { & $script:ResetScriptPath -WorkspaceName 'log-sentinel-001' -WhatIf } | Should -Not -Throw
-        ($global:AzCalls -join "`n") | Should -Match 'account list'
+        ($global:AzCalls -join "`n") | Should -Match 'account show'
         ($global:AzCalls -join "`n") | Should -Match 'resource list --subscription sub-1 --resource-type Microsoft\.OperationalInsights/workspaces'
     }
 

@@ -119,55 +119,19 @@ function Resolve-WorkspaceResourceId {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
-        # Check the current (default) subscription first to avoid scanning all subscriptions.
         $currentSub = Invoke-AzJson -Arguments @('account', 'show', '--query', 'id', '-o', 'json')
-        if (-not [string]::IsNullOrWhiteSpace($currentSub)) {
-            Write-Verbose "Checking default subscription first: $currentSub"
-            $defaultHits = @(Invoke-AzJson -Arguments @(
-                    'resource', 'list',
-                    '--subscription', $currentSub,
-                    '--resource-type', 'Microsoft.OperationalInsights/workspaces',
-                    '--query', "[?name=='$ExplicitWorkspaceName'].id",
-                    '-o', 'json'
-                ))
+        Write-Verbose "Searching for workspace '$ExplicitWorkspaceName' in current subscription: $currentSub"
 
-            if ($defaultHits.Count -eq 1 -and -not [string]::IsNullOrWhiteSpace($defaultHits[0])) {
-                Write-Verbose "Found workspace in default subscription."
-                return $defaultHits[0]
-            }
-        }
-
-        Write-Verbose "Workspace not found in default subscription. Scanning all enabled subscriptions..."
-        $subscriptionIds = @(Invoke-AzJson -Arguments @(
-                'account', 'list',
-                '--query', "[?state=='Enabled'].id",
+        $workspaces = @(Invoke-AzJson -Arguments @(
+                'resource', 'list',
+                '--subscription', $currentSub,
+                '--resource-type', 'Microsoft.OperationalInsights/workspaces',
+                '--query', "[?name=='$ExplicitWorkspaceName'].id",
                 '-o', 'json'
             ))
-        Write-Verbose "Scanning $($subscriptionIds.Count) subscription(s)..."
-
-        $workspaceMatches = @()
-        foreach ($subId in $subscriptionIds) {
-            if ($subId -eq $currentSub) { continue }
-            Write-Verbose "  Scanning subscription: $subId"
-            $ids = @(Invoke-AzJson -Arguments @(
-                    'resource', 'list',
-                    '--subscription', $subId,
-                    '--resource-type', 'Microsoft.OperationalInsights/workspaces',
-                    '--query', "[?name=='$ExplicitWorkspaceName'].id",
-                    '-o', 'json'
-                ))
-
-            foreach ($id in $ids) {
-                if (-not [string]::IsNullOrWhiteSpace($id)) {
-                    $workspaceMatches += $id
-                }
-            }
-        }
-
-        $workspaces = @($workspaceMatches | Sort-Object -Unique)
 
         if ($workspaces.Count -eq 0) {
-            throw "No workspace discovered with name '$ExplicitWorkspaceName'. Provide -WorkspaceResourceId explicitly."
+            throw "No workspace named '$ExplicitWorkspaceName' found in subscription '$currentSub'. Switch subscription with 'az account set --subscription <id>' or use -SubscriptionId, or provide the full -WorkspaceResourceId."
         }
 
         if ($workspaces.Count -gt 1) {
