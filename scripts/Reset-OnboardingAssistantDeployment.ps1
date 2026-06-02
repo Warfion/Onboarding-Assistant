@@ -488,17 +488,22 @@ foreach ($rg in $deploymentResourceGroups) {
     foreach ($id in $rgStorage) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$storageIds.Add($id) } }
 }
 
-# The workbook name is a deterministic GUID derived from the workspace ID.
-# Reproduce the same naming convention used in workspace-resources.bicep.
-$workbookName = [guid]::NewGuid()  # placeholder — compute below
-# Bicep guid() uses a v5 UUID namespace; replicate via az rest probe.
+# Query workbooks scoped to the workspace via the REST API.
 $workbookIds = @()
-$workbookCandidateId = "/subscriptions/$resolvedSubscriptionId/resourceGroups/$resolvedResourceGroupName/providers/Microsoft.Insights/workbooks"
-$workbookListUri = "https://management.azure.com${workbookCandidateId}?api-version=2023-06-01&sourceId=$([uri]::EscapeDataString($resolvedWorkspaceId))"
+$workbookBaseUri = "https://management.azure.com/subscriptions/$resolvedSubscriptionId/resourceGroups/$resolvedResourceGroupName/providers/Microsoft.Insights/workbooks"
+$encodedSourceId = [uri]::EscapeDataString($resolvedWorkspaceId)
+$workbookFullUri = "${workbookBaseUri}?api-version=2023-06-01&sourceId=${encodedSourceId}"
 try {
-    $wbList = Invoke-AzJson -Arguments @('rest', '--method', 'GET', '--uri', $workbookListUri, '--query', "value[?properties.displayName=='Sentinel Data Source Onboarding Assistant'].id", '-o', 'json')
-    foreach ($wbId in $wbList) {
-        if (-not [string]::IsNullOrWhiteSpace($wbId)) { $workbookIds += $wbId }
+    # Use az rest with explicit quoting to prevent shell interpretation of '&'
+    $wbOutput = & az rest --method GET --uri "$workbookFullUri" --query "value[?properties.displayName=='Sentinel Data Source Onboarding Assistant'].id" -o json 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $wbText = ($wbOutput | Out-String).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($wbText)) {
+            $wbList = $wbText | ConvertFrom-Json
+            foreach ($wbId in $wbList) {
+                if (-not [string]::IsNullOrWhiteSpace($wbId)) { $workbookIds += $wbId }
+            }
+        }
     }
 } catch {
     Write-Verbose "Could not query workbooks: $($_.Exception.Message)"
