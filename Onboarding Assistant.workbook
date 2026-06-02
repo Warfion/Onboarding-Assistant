@@ -78,7 +78,19 @@
             "queryType": 1,
             "resourceType": "microsoft.resourcegraph/resources",
             "label": "🗂️ Workspace"
-          },
+          }
+        ],
+        "style": "above",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "params-WorkspaceSelection"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
           {
             "id": "3a32bd8f-cfd1-4b20-9f0d-0d66d7aa668f",
             "version": "KqlParameterItem/1.0",
@@ -202,7 +214,7 @@
         "queryType": 1,
         "resourceType": "microsoft.resourcegraph/resources"
       },
-      "name": "params-Global"
+      "name": "params-Derived"
     },
     {
       "type": 1,
