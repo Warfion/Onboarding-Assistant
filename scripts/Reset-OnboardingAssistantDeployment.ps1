@@ -302,6 +302,7 @@ function Remove-ResourceById {
 
     $exists = (& az resource show --ids $ResourceId --query id -o tsv 2>$null)
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($exists)) {
+        Write-Verbose "Resource not found (skipping): $ResourceId"
         return
     }
 
@@ -475,7 +476,7 @@ Write-Host " - App Service Plans: $(@($planIds).Count)"
 Write-Host " - Application Insights: $(@($appInsightsIds).Count)"
 Write-Host " - Storage Accounts: $(@($storageIds).Count)"
 Write-Host " - Workbooks: $($workbookIds.Count)"
-Write-Host " - Watchlists to remove: $($watchlistIds.Count)"
+Write-Host " - Watchlists to check: $($watchlistIds.Count)"
 Write-Host " - Managed identity principals discovered: $($principalIds.Count)"
 
 if (-not $SkipSentinelContributorCleanup) {
