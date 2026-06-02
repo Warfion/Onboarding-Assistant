@@ -321,8 +321,14 @@ function Remove-ResourceById {
 
     if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
         Write-Host "Deleting resource: $ResourceId"
-        & az resource delete --ids $ResourceId -o none | Out-Null
+        $deleteOutput = & az resource delete --ids $ResourceId -o none 2>&1
         if ($LASTEXITCODE -ne 0) {
+            $details = ($deleteOutput | Out-String).Trim()
+            if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
+                Write-Warning "Resource deletion failed due to authentication issue: $ResourceId"
+                Write-Warning "Run 'az login' to re-authenticate, then retry."
+                return
+            }
             throw "Failed to delete resource: $ResourceId"
         }
         Write-Host "Deleted resource: $ResourceId"
