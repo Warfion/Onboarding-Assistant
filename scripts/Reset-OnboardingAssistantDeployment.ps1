@@ -7,12 +7,14 @@ param(
     [string]$DeploymentResourceGroupName,
     [string]$LogicAppName = 'la-watchlist-refresh',
     [switch]$DeleteResourceGroup,
+    [switch]$Force,
     [switch]$SkipSentinelContributorCleanup,
     [switch]$SkipPrincipalDeletion
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:SkipServicePrincipalDeletionDueToPermissions = $false
 
 function Assert-AzCliInstalled {
     if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
@@ -250,13 +252,50 @@ function Resolve-DeploymentResourceGroups {
 function Remove-RoleAssignmentsByIds {
     param([string[]]$AssignmentIds)
 
-    foreach ($id in @($AssignmentIds | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })) {
-        if ($PSCmdlet.ShouldProcess($id, 'Delete role assignment')) {
-            & az role assignment delete --ids $id | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to delete role assignment: $id"
+    $ids = @($AssignmentIds |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+            Sort-Object -Unique)
+
+    if ($ids.Count -eq 0) {
+        return
+    }
+
+    # Batch deletes to reduce Azure CLI process startup overhead on larger cleanups.
+    $chunkSize = 20
+    for ($i = 0; $i -lt $ids.Count; $i += $chunkSize) {
+        $end = [Math]::Min($i + $chunkSize - 1, $ids.Count - 1)
+        $chunk = @($ids[$i..$end])
+        $target = if ($chunk.Count -eq 1) { $chunk[0] } else { "$($chunk.Count) role assignments" }
+
+        if ($Force -or $PSCmdlet.ShouldProcess($target, 'Delete role assignment(s)')) {
+            $timer = [System.Diagnostics.Stopwatch]::StartNew()
+            Write-Host "Deleting role assignment chunk ($($chunk.Count))..."
+            & az role assignment delete --ids @chunk -o none | Out-Null
+            $exitCode = $LASTEXITCODE
+            $timer.Stop()
+
+            if ($exitCode -eq 0) {
+                if ($chunk.Count -eq 1) {
+                    Write-Host "Deleted role assignment: $($chunk[0]) in $([Math]::Round($timer.Elapsed.TotalSeconds, 1))s"
+                } else {
+                    Write-Host "Deleted role assignments: $($chunk.Count) in $([Math]::Round($timer.Elapsed.TotalSeconds, 1))s"
+                }
+                continue
             }
-            Write-Host "Deleted role assignment: $id"
+
+            # Fall back to per-item deletion so one failing assignment does not hide which ID failed.
+            Write-Warning "Bulk role-assignment deletion failed; retrying one-by-one for diagnostics."
+            foreach ($id in $chunk) {
+                $singleTimer = [System.Diagnostics.Stopwatch]::StartNew()
+                Write-Host "Deleting role assignment: $id"
+                & az role assignment delete --ids $id -o none | Out-Null
+                $singleExitCode = $LASTEXITCODE
+                $singleTimer.Stop()
+                if ($singleExitCode -ne 0) {
+                    throw "Failed to delete role assignment: $id"
+                }
+                Write-Host "Deleted role assignment: $id in $([Math]::Round($singleTimer.Elapsed.TotalSeconds, 1))s"
+            }
         }
     }
 }
@@ -273,8 +312,9 @@ function Remove-ResourceById {
         return
     }
 
-    if ($PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
-        & az resource delete --ids $ResourceId | Out-Null
+    if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
+        Write-Host "Deleting resource: $ResourceId"
+        & az resource delete --ids $ResourceId -o none | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to delete resource: $ResourceId"
         }
@@ -289,15 +329,31 @@ function Try-DeleteServicePrincipal {
         return
     }
 
+    if ($script:SkipServicePrincipalDeletionDueToPermissions) {
+        return
+    }
+
     $spExists = & az ad sp show --id $PrincipalId --query id -o tsv 2>$null
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($spExists)) {
         return
     }
 
-    if ($PSCmdlet.ShouldProcess($PrincipalId, 'Delete Entra service principal')) {
-        & az ad sp delete --id $PrincipalId | Out-Null
+    if ($Force -or $PSCmdlet.ShouldProcess($PrincipalId, 'Delete Entra service principal')) {
+        Write-Host "Deleting service principal: $PrincipalId"
+        $deleteOutput = & az ad sp delete --id $PrincipalId -o none 2>&1
         if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Could not delete service principal $PrincipalId. Check Entra permissions."
+            $details = ($deleteOutput | Out-String).Trim()
+            if ($details -match 'Insufficient privileges to complete the operation') {
+                $script:SkipServicePrincipalDeletionDueToPermissions = $true
+                Write-Warning "Insufficient Entra privileges to delete service principals. Skipping remaining principal deletions."
+                return
+            }
+
+            if ([string]::IsNullOrWhiteSpace($details)) {
+                Write-Warning "Could not delete service principal $PrincipalId. Check Entra permissions."
+            } else {
+                Write-Warning "Could not delete service principal $PrincipalId. $details"
+            }
         } else {
             Write-Host "Deleted service principal: $PrincipalId"
         }
@@ -409,9 +465,9 @@ $watchlistIds = @(
 
 $principalIds = [System.Collections.Generic.HashSet[string]]::new()
 foreach ($id in @(@($logicAppIds) + @($functionAppIds))) {
-    $pid = (& az resource show --ids $id --query identity.principalId -o tsv 2>$null)
-    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($pid)) {
-        [void]$principalIds.Add($pid.Trim())
+    $resolvedPrincipalId = (& az resource show --ids $id --query identity.principalId -o tsv 2>$null)
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($resolvedPrincipalId)) {
+        [void]$principalIds.Add($resolvedPrincipalId.Trim())
     }
 }
 
@@ -467,7 +523,8 @@ foreach ($id in @($storageIds)) {
 
 if ($DeleteResourceGroup) {
     $resourceGroupToDelete = if (-not [string]::IsNullOrWhiteSpace($DeploymentResourceGroupName)) { $DeploymentResourceGroupName } else { $resolvedResourceGroupName }
-    if ($PSCmdlet.ShouldProcess($resourceGroupToDelete, 'Delete entire resource group')) {
+    if ($Force -or $PSCmdlet.ShouldProcess($resourceGroupToDelete, 'Delete entire resource group')) {
+        Write-Host "Triggering resource group deletion: $resourceGroupToDelete"
         & az group delete --name $resourceGroupToDelete --yes --no-wait | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to delete resource group: $resourceGroupToDelete"
@@ -477,8 +534,8 @@ if ($DeleteResourceGroup) {
 }
 
 if (-not $SkipPrincipalDeletion) {
-    foreach ($pid in $principalIds) {
-        Try-DeleteServicePrincipal -PrincipalId $pid
+    foreach ($principalId in $principalIds) {
+        Try-DeleteServicePrincipal -PrincipalId $principalId
     }
 }
 

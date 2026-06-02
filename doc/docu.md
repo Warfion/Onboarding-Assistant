@@ -220,16 +220,14 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Cross-resource-group workspace deployment support | Complete |
 | Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
 | Reset-flow consolidation and split-RG cleanup targeting | Complete |
+| Workbook metadata query hardening for workspace-not-ready state | Complete |
+| Reset script PID variable collision fix | Complete |
 | Function test suite | 47 passing |
 | Public GitHub packaging and one-click deploy documentation | Complete |
 
 ---
 
-## 9. Known Gaps
-
-| Gap | Impact | Tracking |
-|---|---|---|
-| None currently tracked | N/A | N/A |
+## 9. Reset and Cleanup Guidance
 
 ### 9.1 Full Reset for Fresh Deployment
 
@@ -244,6 +242,7 @@ Optional switches:
 
 ```powershell
 ./scripts/Reset-OnboardingAssistantDeployment.ps1 \
+  -WorkspaceName "<workspace-name>" \
   -WorkspaceResourceId "/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace>" \
   -DeploymentResourceGroupName "<deployment-rg>" \
   -DeleteResourceGroup

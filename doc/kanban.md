@@ -6,6 +6,26 @@
 
 ## Done
 
+### ✅ 18 — Workbook Metadata Fail-Safe and Reset Script PID Fix
+
+- tags: [workbook, scripts, reliability, sync-docs]
+- priority: high
+- status: complete
+
+```md
+Hardened workbook parameter behavior for not-ready workspaces and fixed reset script execution reliability.
+
+DELIVERED:
+✅ Made `RefreshWorkflowIdFromMeta` query fault-tolerant when Con_Meta does not exist, preventing query-failed parameter exposure in workspace-not-ready state.
+✅ Fixed PowerShell variable-name collision in reset script (`$pid` vs `$PID`) that caused read-only variable overwrite errors.
+✅ Verified reset dry-run execution with `-WorkspaceName`, `-Verbose`, and `-WhatIf` after fix.
+✅ Confirmed split-RG cleanup enumeration still works after the PID fix.
+
+INVENTORY DELTA:
+- Added: none
+- Removed: none
+```
+
 ### ✅ 17 — Reset Flow Consolidation and Split-RG Cleanup Targeting
 
 - tags: [deployment, scripts, tests, sync-docs]

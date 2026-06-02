@@ -139,7 +139,7 @@
             "version": "KqlParameterItem/1.0",
             "name": "RefreshWorkflowIdFromMeta",
             "type": 1,
-            "query": "_GetWatchlist('Con_Meta')\r\n| extend RefreshTime = todatetime(Timestamp), LogicAppResourceId = tostring(column_ifexists('LogicAppResourceId', ''))\r\n| where isnotempty(LogicAppResourceId)\r\n| summarize arg_max(RefreshTime, LogicAppResourceId)\r\n| project RefreshWorkflowIdFromMeta = LogicAppResourceId",
+            "query": "let meta = union isfuzzy=true (_GetWatchlist('Con_Meta')\r\n| extend RefreshTime = todatetime(Timestamp), LogicAppResourceId = tostring(column_ifexists('LogicAppResourceId', ''))\r\n| where isnotempty(LogicAppResourceId)\r\n| project RefreshTime, LogicAppResourceId), (datatable(RefreshTime:datetime, LogicAppResourceId:string)[]);\r\nmeta\r\n| summarize arg_max(RefreshTime, LogicAppResourceId)\r\n| project RefreshWorkflowIdFromMeta = tostring(LogicAppResourceId)",
             "crossComponentResources": [
               "{Workspace}"
             ],

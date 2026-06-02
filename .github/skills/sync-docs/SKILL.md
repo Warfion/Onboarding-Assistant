@@ -29,7 +29,7 @@ copilot-instructions.md  ←→  doc/architecture.md
 ```
 
 - **Coding principles** in `copilot-instructions.md` must be consistent with **patterns described** in `architecture.md`
-- **Status & Known Gaps** in `docu.md` §9 must have matching **kanban items** in `kanban.md`
+- **Status & Reset/Cleanup Guidance** in `docu.md` §9 must have matching **kanban items** in `kanban.md`
 - **Done kanban items** must be reflected in `docu.md` (§9 status, §10 file inventory) and `architecture.md` (diagrams, topology)
 - **New infrastructure or code files** must appear in `docu.md` §10 (File Inventory) and `architecture.md` §8 (Deployment Topology)
 - **Schema changes** (watchlist columns, workbook elements) must be consistent across `docu.md` §5, `architecture.md` §9, and actual code
@@ -38,7 +38,7 @@ copilot-instructions.md  ←→  doc/architecture.md
 
 ### Canonical Section Map
 
-- `doc/docu.md`: §9 = Status and Known Gaps, §10 = File Inventory
+- `doc/docu.md`: §9 = Reset and Cleanup Guidance, §10 = File Inventory
 - `doc/architecture.md`: §9 must explicitly include schema consistency reference aligned to `doc/docu.md` §5 and code
 
 ## Procedure
@@ -50,7 +50,7 @@ When the user describes a change (e.g. "I added Pester tests and refactored run.
 1. **Identify the source** — which file or code was already updated?
 2. **Read all 4 editable governing documents** to understand current state
 3. **Determine required updates** for each remaining file:
-   - `doc/docu.md`: Update §9 (Status & Known Gaps), §10 (File Inventory), or relevant schema sections
+   - `doc/docu.md`: Update §9 (Reset and Cleanup Guidance), §10 (File Inventory), or relevant schema sections
    - `doc/kanban.md`: Move item to Done, or add new item if the change introduces follow-up work
    - `.github/copilot-instructions.md`: Add/update rule if the change establishes a new coding convention
    - `doc/architecture.md`: Update diagrams, topology, or element naming if structure changed
@@ -62,7 +62,7 @@ When the user describes a change (e.g. "I added Pester tests and refactored run.
 
 1. **Read all 4 editable governing documents**
 2. **Cross-reference** for drift:
-   - Gaps listed in `docu.md` §9 without a kanban item
+   - Reset/cleanup guidance updates in `docu.md` §9 without a matching kanban item
    - Done kanban items whose changes aren't reflected in `docu.md` or `architecture.md`
    - Files in the workspace not listed in `docu.md` §10 (File Inventory)
    - Architecture diagrams in `architecture.md` that don't match current code structure
@@ -84,7 +84,7 @@ When the user describes a change (e.g. "I added Pester tests and refactored run.
 When the user describes a new improvement idea:
 
 1. **Draft the kanban item** for `doc/kanban.md` (To Do section, with tags/priority and design spec in fenced code block)
-2. **Draft the docu.md update** — add to §9 (Known Gaps) or relevant section
+2. **Draft the docu.md update** — add to §9 (Reset and Cleanup Guidance) or relevant section
 3. **Present both drafts** — wait for confirmation
 4. **Apply edits** — do NOT touch `copilot-instructions.md` or `architecture.md` until the improvement is implemented
 

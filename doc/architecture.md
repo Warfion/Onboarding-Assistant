@@ -193,6 +193,7 @@ Workflow
 
 - Default targeting mode: resolves the workflow resource ID from the latest Con_Meta row (LogicAppResourceId) for the selected workspace, then triggers that workflow. If the field is unavailable, fallback targeting derives subscription and resource group from the selected workspace.
 - Override targeting mode: uses an operator-selected Logic App workflow resource for cross-resource-group deployments where the refresh workflow is hosted outside the workspace resource group.
+- Workbook metadata lookup (`RefreshWorkflowIdFromMeta`) is fault-tolerant when Con_Meta is missing, so workspace-not-ready states do not surface query-failed parameter noise.
 
 Deployment note:
 
