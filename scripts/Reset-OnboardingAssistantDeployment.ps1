@@ -315,20 +315,21 @@ function Remove-ResourceById {
 
     # Skip the slow az-resource-show existence check — resources were already
     # discovered via Resource Graph, so we trust the list.  If the resource
-    # was deleted between discovery and now, --no-wait will simply return a
+    # was deleted between discovery and now, the delete will simply return a
     # 404 which we handle below.
 
     if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
-        Write-Host "Deleting resource (async): $ResourceId"
+        Write-Host "Deleting resource: $ResourceId"
 
-        # Sentinel watchlists require an explicit API version; generic
-        # az-resource-delete fails without one.
-        $deleteArgs = @('resource', 'delete', '--ids', $ResourceId, '--no-wait', '-o', 'none')
+        # Sentinel watchlists fail with generic az-resource-delete; use the
+        # REST API directly for reliable deletion.
         if ($ResourceId -match 'Microsoft\.SecurityInsights/watchlists') {
-            $deleteArgs += @('--api-version', '2024-03-01')
+            $uri = "https://management.azure.com${ResourceId}?api-version=2024-03-01"
+            $deleteOutput = & az rest --method DELETE --uri $uri -o none 2>&1
+        } else {
+            $deleteOutput = & az resource delete --ids $ResourceId --no-wait -o none 2>&1
         }
 
-        $deleteOutput = & az @deleteArgs 2>&1
         if ($LASTEXITCODE -ne 0) {
             $details = ($deleteOutput | Out-String).Trim()
             if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
@@ -343,7 +344,7 @@ function Remove-ResourceById {
             if ($details) { Write-Verbose "Delete error details: $details" }
             return
         }
-        Write-Host "Delete queued: $ResourceId"
+        Write-Host "Deleted: $ResourceId"
     }
 }
 
