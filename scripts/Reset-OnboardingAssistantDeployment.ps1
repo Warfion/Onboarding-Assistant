@@ -328,11 +328,12 @@ function Remove-ResourceById {
                 Write-Warning "Run 'az login' to re-authenticate, then retry."
                 return
             }
-            if ($details -match 'ResourceNotFound|not found|NotFound|could not be found') {
-                Write-Verbose "Resource already deleted (skipping): $ResourceId"
-                return
-            }
-            throw "Failed to delete resource: $ResourceId"
+            # Treat not-found and any other non-auth error as non-fatal — the
+            # resource may already be gone or the provider may return an
+            # unexpected error shape.  Log details so the user can investigate.
+            Write-Warning "Could not delete resource (continuing): $ResourceId"
+            if ($details) { Write-Verbose "Delete error details: $details" }
+            return
         }
         Write-Host "Delete queued: $ResourceId"
     }
