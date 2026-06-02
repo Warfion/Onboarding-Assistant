@@ -263,7 +263,7 @@ function Remove-RoleAssignmentsByIds {
         if ($Force -or $PSCmdlet.ShouldProcess($target, 'Delete role assignment(s)')) {
             $timer = [System.Diagnostics.Stopwatch]::StartNew()
             Write-Host "Deleting role assignment chunk ($($chunk.Count))..."
-            & az role assignment delete --ids @chunk -o none | Out-Null
+            $bulkOutput = & az role assignment delete --ids @chunk -o none 2>&1
             $exitCode = $LASTEXITCODE
             $timer.Stop()
 
@@ -276,15 +276,28 @@ function Remove-RoleAssignmentsByIds {
                 continue
             }
 
+            $bulkDetails = ($bulkOutput | Out-String).Trim()
+            if ($bulkDetails -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
+                Write-Warning "Role-assignment deletion failed due to authentication issue. Run 'az login' to re-authenticate, then retry."
+                Write-Warning "Alternatively, use -SkipSentinelContributorCleanup to bypass this step."
+                return
+            }
+
             # Fall back to per-item deletion so one failing assignment does not hide which ID failed.
             Write-Warning "Bulk role-assignment deletion failed; retrying one-by-one for diagnostics."
             foreach ($id in $chunk) {
                 $singleTimer = [System.Diagnostics.Stopwatch]::StartNew()
                 Write-Host "Deleting role assignment: $id"
-                & az role assignment delete --ids $id -o none | Out-Null
+                $singleOutput = & az role assignment delete --ids $id -o none 2>&1
                 $singleExitCode = $LASTEXITCODE
                 $singleTimer.Stop()
                 if ($singleExitCode -ne 0) {
+                    $singleDetails = ($singleOutput | Out-String).Trim()
+                    if ($singleDetails -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
+                        Write-Warning "Role-assignment deletion failed due to authentication issue. Run 'az login' to re-authenticate, then retry."
+                        Write-Warning "Alternatively, use -SkipSentinelContributorCleanup to bypass this step."
+                        return
+                    }
                     throw "Failed to delete role assignment: $id"
                 }
                 Write-Host "Deleted role assignment: $id in $([Math]::Round($singleTimer.Elapsed.TotalSeconds, 1))s"
