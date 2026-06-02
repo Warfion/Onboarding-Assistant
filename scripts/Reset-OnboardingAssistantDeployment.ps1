@@ -119,7 +119,25 @@ function Resolve-WorkspaceResourceId {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($ExplicitWorkspaceName)) {
-        Write-Verbose "Resolving workspace by name '$ExplicitWorkspaceName' across all enabled subscriptions..."
+        # Check the current (default) subscription first to avoid scanning all subscriptions.
+        $currentSub = Invoke-AzJson -Arguments @('account', 'show', '--query', 'id', '-o', 'json')
+        if (-not [string]::IsNullOrWhiteSpace($currentSub)) {
+            Write-Verbose "Checking default subscription first: $currentSub"
+            $defaultHits = @(Invoke-AzJson -Arguments @(
+                    'resource', 'list',
+                    '--subscription', $currentSub,
+                    '--resource-type', 'Microsoft.OperationalInsights/workspaces',
+                    '--query', "[?name=='$ExplicitWorkspaceName'].id",
+                    '-o', 'json'
+                ))
+
+            if ($defaultHits.Count -eq 1 -and -not [string]::IsNullOrWhiteSpace($defaultHits[0])) {
+                Write-Verbose "Found workspace in default subscription."
+                return $defaultHits[0]
+            }
+        }
+
+        Write-Verbose "Workspace not found in default subscription. Scanning all enabled subscriptions..."
         $subscriptionIds = @(Invoke-AzJson -Arguments @(
                 'account', 'list',
                 '--query', "[?state=='Enabled'].id",
@@ -129,6 +147,7 @@ function Resolve-WorkspaceResourceId {
 
         $workspaceMatches = @()
         foreach ($subId in $subscriptionIds) {
+            if ($subId -eq $currentSub) { continue }
             Write-Verbose "  Scanning subscription: $subId"
             $ids = @(Invoke-AzJson -Arguments @(
                     'resource', 'list',
