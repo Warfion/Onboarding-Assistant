@@ -496,15 +496,24 @@ Write-Host " - Watchlists to remove: $($watchlistIds.Count)"
 Write-Host " - Managed identity principals discovered: $($principalIds.Count)"
 
 if (-not $SkipSentinelContributorCleanup) {
-    $sentinelAssignments = @(Invoke-AzJson -Arguments @(
-            'role', 'assignment', 'list',
-            '--scope', $resolvedWorkspaceId,
-            '--query', "[?roleDefinitionName=='Microsoft Sentinel Contributor'].id",
-            '-o', 'json'
-        ))
+    try {
+        $sentinelAssignments = @(Invoke-AzJson -Arguments @(
+                'role', 'assignment', 'list',
+                '--scope', $resolvedWorkspaceId,
+                '--query', "[?roleDefinitionName=='Microsoft Sentinel Contributor'].id",
+                '-o', 'json'
+            ))
 
-    Write-Host " - Sentinel Contributor assignments to delete: $($sentinelAssignments.Count)"
-    Remove-RoleAssignmentsByIds -AssignmentIds $sentinelAssignments
+        Write-Host " - Sentinel Contributor assignments to delete: $($sentinelAssignments.Count)"
+        Remove-RoleAssignmentsByIds -AssignmentIds $sentinelAssignments
+    } catch {
+        if ($_.Exception.Message -match 'Timeout waiting for token|token expired|AADSTS') {
+            Write-Warning "Skipping role-assignment cleanup: Azure CLI token expired. Run 'az login' to re-authenticate, then retry."
+            Write-Warning "Alternatively, use -SkipSentinelContributorCleanup to bypass this step."
+        } else {
+            throw
+        }
+    }
 }
 
 foreach ($id in $watchlistIds) {
