@@ -148,7 +148,12 @@
               "durationMs": 259200000
             },
             "queryType": 0,
-            "resourceType": "microsoft.operationalinsights/workspaces"
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "conditionalVisibility": {
+              "parameterName": "WorkspaceEligible",
+              "comparison": "isEqualTo",
+              "value": "Yes"
+            }
           },
           {
             "id": "829dfce7-fbc5-4f55-a878-8a83d88e3508",
