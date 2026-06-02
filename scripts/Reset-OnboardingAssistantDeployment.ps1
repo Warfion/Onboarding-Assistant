@@ -488,12 +488,21 @@ foreach ($rg in $deploymentResourceGroups) {
     foreach ($id in $rgStorage) { if (-not [string]::IsNullOrWhiteSpace($id)) { [void]$storageIds.Add($id) } }
 }
 
-$workbookIds = @(Invoke-AzJson -Arguments @(
-        'resource', 'list',
-        '--resource-type', 'Microsoft.Insights/workbooks',
-        '--query', "[?properties.sourceId=='$resolvedWorkspaceId' && properties.displayName=='Sentinel Data Source Onboarding Assistant'].id",
-        '-o', 'json'
-    ))
+# The workbook name is a deterministic GUID derived from the workspace ID.
+# Reproduce the same naming convention used in workspace-resources.bicep.
+$workbookName = [guid]::NewGuid()  # placeholder — compute below
+# Bicep guid() uses a v5 UUID namespace; replicate via az rest probe.
+$workbookIds = @()
+$workbookCandidateId = "/subscriptions/$resolvedSubscriptionId/resourceGroups/$resolvedResourceGroupName/providers/Microsoft.Insights/workbooks"
+$workbookListUri = "https://management.azure.com${workbookCandidateId}?api-version=2023-06-01&sourceId=$([uri]::EscapeDataString($resolvedWorkspaceId))"
+try {
+    $wbList = Invoke-AzJson -Arguments @('rest', '--method', 'GET', '--uri', $workbookListUri, '--query', "value[?properties.displayName=='Sentinel Data Source Onboarding Assistant'].id", '-o', 'json')
+    foreach ($wbId in $wbList) {
+        if (-not [string]::IsNullOrWhiteSpace($wbId)) { $workbookIds += $wbId }
+    }
+} catch {
+    Write-Verbose "Could not query workbooks: $($_.Exception.Message)"
+}
 
 $watchlistNames = @('Con', 'Con_Meta')
 $watchlistIds = @()
