@@ -313,11 +313,10 @@ function Remove-ResourceById {
         return
     }
 
-    $exists = (& az resource show --ids $ResourceId --query id -o tsv 2>$null)
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($exists)) {
-        Write-Verbose "Resource not found (skipping): $ResourceId"
-        return
-    }
+    # Skip the slow az-resource-show existence check — resources were already
+    # discovered via Resource Graph, so we trust the list.  If the resource
+    # was deleted between discovery and now, --no-wait will simply return a
+    # 404 which we handle below.
 
     if ($Force -or $PSCmdlet.ShouldProcess($ResourceId, 'Delete Azure resource')) {
         Write-Host "Deleting resource (async): $ResourceId"
@@ -327,6 +326,10 @@ function Remove-ResourceById {
             if ($details -match 'InteractionRequired|Timeout waiting for token|token expired|AADSTS|claims challenge') {
                 Write-Warning "Resource deletion failed due to authentication issue: $ResourceId"
                 Write-Warning "Run 'az login' to re-authenticate, then retry."
+                return
+            }
+            if ($details -match 'ResourceNotFound|not found|NotFound|could not be found') {
+                Write-Verbose "Resource already deleted (skipping): $ResourceId"
                 return
             }
             throw "Failed to delete resource: $ResourceId"
