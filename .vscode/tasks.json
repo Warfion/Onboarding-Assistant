@@ -2,6 +2,59 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"type": "shell",
+			"label": "context7: save api key (encrypted)",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/scripts/context7/Set-Context7ApiKey.ps1"
+			],
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "context7: health check",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/scripts/context7/Test-Context7Setup.ps1"
+			],
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "context7: import key + health check",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/scripts/context7/Test-Context7Setup.ps1",
+				"-ImportKey"
+			],
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "context7: launch vscode with key",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}/scripts/context7/Start-VSCodeWithContext7.ps1"
+			],
+			"problemMatcher": []
+		},
+		{
 			"type": "func",
 			"label": "func: host start",
 			"command": "host start",

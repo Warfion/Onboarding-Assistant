@@ -59,3 +59,9 @@ ALWAYS use #context7 MCP Server to read relevant documentation. Do this every ti
 ### Documentation
 - Governing docs live in `doc/` — keep `docu.md`, `architecture.md`, `kanban.md` in sync via the sync-docs skill.
 - File inventory in `docu.md` §10 must reflect actual workspace contents.
+
+### Context7 Reliability Policy
+- Before Context7-dependent work, run a preflight check (`scripts/context7/Test-Context7Setup.ps1`).
+- On `401` auth failures, show a clear warning immediately: token expired/invalid.
+- Retry only transient failures (network/timeouts) with short backoff; do not retry `401`.
+- If retries fail for non-auth reasons, proceed with a clear warning and use fallback official documentation sources.
