@@ -6,6 +6,26 @@
 
 ## Done
 
+### ✅ 19 — Document Parsing and Domain Categorization + Maintenance Guide
+
+- tags: [documentation, parser, domain-map, sync-docs]
+- priority: medium
+- status: complete
+
+```md
+Made the connector parsing logic and domain categorization traceable, and added a maintenance guide for the domain map.
+
+DELIVERED:
+✅ Documented the parsing pipeline (line-by-line state machine, row normalization, badge/flag handling) in doc/architecture.md section 6.2.
+✅ Documented data-driven domain categorization, substring matching, _multiDomain, and the Other fallback in doc/architecture.md section 6.3.
+✅ Added a domain map maintenance guide (curation checklist + rules) in doc/architecture.md section 6.4, README.md, and doc/docu.md sections 5.1/5.2.
+✅ Bumped doc versions (architecture 2.5, docu 2.5) and added a status row in docu.md.
+
+INVENTORY DELTA:
+- Added: none
+- Removed: none
+```
+
 ### ✅ 18 — Workbook Metadata Fail-Safe and Reset Script PID Fix
 
 - tags: [workbook, scripts, reliability, sync-docs]

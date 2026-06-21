@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.4
-Last Updated: 2026-06-01
+Version: 2.5
+Last Updated: 2026-06-21
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -172,6 +172,28 @@ Notes:
 - Connector ID is used for deterministic matching in coverage queries
 - Watchlist updates are atomic PUT operations (fail-closed behavior)
 
+### 5.1 Parsing and Domain Categorization
+
+The ParseConnectors function (func-watchlist-parser/ParseConnectors/run.ps1) converts the upstream connector index markdown into the 12-column CSV:
+
+- A line-by-line state machine reads connector table rows, tracks the `🚫 Deprecated` section, and protects escaped pipes inside cells.
+- Each row is normalized: markdown links and emoji badges are stripped, badges become Flags, and Status/Vendor/Method/Table Count/Solution are derived.
+- Domain and Subdomain are assigned by matching the connector name against the patterns in ParseConnectors/domain-map.json.
+
+Domain matching is a case-insensitive substring match where the first matching pattern wins; unmatched connectors are categorized as `Domain = Other` (never dropped). New connectors categorize "dynamically" because one vendor pattern covers an entire product family, while a genuinely new vendor stays in `Other` until a pattern is added. All domain logic stays in domain-map.json — never hardcoded in run.ps1.
+
+### 5.2 Domain Map Maintenance
+
+To curate categorization after a refresh:
+
+1. Filter the Con watchlist (or workbook Tab 1) for `Domain = Other`.
+2. In ParseConnectors/domain-map.json, add the most specific stable fragment of the connector/vendor name to the correct `"Domain / Subdomain"` key (or to the `_multiDomain` block for cross-cutting connectors).
+3. Avoid broad fragments that could shadow other subdomains (first match wins).
+4. Run func-watchlist-parser/Tests/ParseConnectors.Tests.ps1 and update tests if behavior changes.
+5. Trigger the Logic App refresh and confirm the connector resolves correctly.
+
+The full technical reference is in doc/architecture.md section 6.
+
 ---
 
 ## 6. Integrations
@@ -217,6 +239,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Workspace eligibility gating (Sentinel + Con_Meta readiness) | Complete |
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
+| Parsing and domain categorization documented (README + architecture + docu) | Complete |
 | Cross-resource-group workspace deployment support | Complete |
 | Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
 | Reset-flow consolidation and split-RG cleanup targeting | Complete |

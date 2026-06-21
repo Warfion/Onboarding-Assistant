@@ -122,6 +122,32 @@ After the ARM deployment completes, run these validation steps:
 - Do not hardcode domain lookups in the parser.
 - Update mappings when connector taxonomy changes upstream.
 
+#### How parsing and categorization work
+
+The Azure Function in [func-watchlist-parser/ParseConnectors/run.ps1](func-watchlist-parser/ParseConnectors/run.ps1) parses the upstream connector index markdown into the 12-column CSV contract:
+
+1. A line-by-line state machine reads each connector table row (tracking the `🚫 Deprecated` section and protecting escaped pipes inside cells).
+2. Each row is normalized — markdown links and emoji badges are stripped, badges become Flags, and Status/Vendor/Method/Table Count/Solution are derived.
+3. The connector name is matched against the patterns in `domain-map.json` to assign Domain and Subdomain.
+
+Domain assignment is a case-insensitive substring match: the first pattern whose text appears in the connector name wins. A connector that matches no pattern is categorized as `Domain = Other` (it is never dropped). This is also how new connectors are categorized "dynamically": a single vendor pattern (for example `CrowdStrike`) automatically covers new connectors from that vendor, while a genuinely new vendor lands in `Other` until a pattern is added.
+
+For the full technical reference, see [doc/architecture.md](doc/architecture.md) section 6.
+
+#### Maintaining the domain map
+
+When new connectors appear (they surface as `Domain = Other` after a refresh) or the upstream taxonomy changes:
+
+1. Filter the `Con` watchlist (or workbook Tab 1) for `Domain = Other` to find what needs curation.
+2. Open [func-watchlist-parser/ParseConnectors/domain-map.json](func-watchlist-parser/ParseConnectors/domain-map.json) and pick the right `"Domain / Subdomain"` key (reuse an existing one where possible).
+3. Add the most specific stable fragment of the connector/vendor name to that key's array. Patterns are case-insensitive substrings, so prefer a distinctive token (for example `"Cyera DSPM"`) over a generic word.
+4. For connectors that belong to multiple domains, add the pattern under the `_multiDomain` block with comma-separated `"Domain / Subdomain"` pairs.
+5. Avoid broad fragments (for example a bare `"Cisco"`) that could shadow connectors in other subdomains — the first matching pattern wins.
+6. Run the parser tests in [func-watchlist-parser/Tests/ParseConnectors.Tests.ps1](func-watchlist-parser/Tests/ParseConnectors.Tests.ps1) and update them if behavior changes.
+7. Trigger the Logic App refresh and confirm the connector now resolves to the intended Domain/Subdomain.
+
+All domain logic stays in `domain-map.json` — never add domain conditionals to `run.ps1`.
+
 ## Repository Layout
 
 The current repository layout is:

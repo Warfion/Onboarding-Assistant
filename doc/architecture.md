@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.4
-Updated: 2026-06-01
+Version: 2.5
+Updated: 2026-06-21
 
 ---
 
@@ -150,6 +150,8 @@ Coverage by Domain and Subdomain table
 
 ## 6. Watchlist Contract
 
+### 6.1 Output Contract
+
 The parser output contract is a CSV with 12 columns:
 
 - Connector Name
@@ -170,6 +172,76 @@ Implementation notes:
 - Domain mapping is externalized in ParseConnectors/domain-map.json
 - Multi-domain and multi-subdomain values are supported (comma separated)
 - Watchlist writes are atomic PUT updates to avoid partial state
+
+### 6.2 Parsing Pipeline
+
+The parser is implemented in ParseConnectors/run.ps1 as a PowerShell HTTP-triggered Azure Function. It receives the upstream connector index markdown plus an optional repository ZIP (for descriptions) and returns `{ csv, stats }`.
+
+```text
+POST { connectorsIndexMarkdown, repoZipBase64|repoZipUrl, sourceVersion, options }
+  1) Shared-secret gate (x-refresh-secret header, when REFRESH_SHARED_SECRET is set)
+  2) Get-DomainMap          -> load domain-map.json into a flat pattern table
+  3) Get-DescriptionsFromZip -> extract first real paragraph per connector slug
+  4) ConvertFrom-ConnectorMarkdown -> line-by-line state machine
+  5) Test-ConnectorData     -> validate + deduplicate by Connector Name
+  6) ConvertTo-WatchlistCsv -> 12-column CSV
+  -> { csv, stats: { total, active, deprecated, sourceVersion } }
+```
+
+Markdown is parsed as a line-by-line state machine in `ConvertFrom-ConnectorMarkdown`:
+
+- Two state flags are tracked: `inTable` (inside a connector table) and `isDeprecatedSection` (inside the `## 🚫 Deprecated` block).
+- Section headers reset state: a `## 🚫 Deprecated` header enters the deprecated section; single-letter headers (`## A`, `## B`, `## #`) reset it (these are the alphabetical groupings).
+- The table header `| | Connector |` turns `inTable` on; the `|---|---|` separator row is skipped.
+- For each data row, escaped pipes (`\|`) inside cells are protected (`<<ESCPIPE>>`) before splitting on `|`, then restored. Rows with fewer than 5 cells are skipped.
+
+Per-row normalization in `ConvertTo-ConnectorObject`:
+
+- Strips inline `[text](url)`, reference-style `[text][ref]`, and bare bracket-wrapped names (`[DNS]` → `DNS`).
+- Reads emoji badges into Flags: 🚫 = Deprecated, ⚠️ = Unpublished, 🔍 = Discovered, ➕ = HasDocs, 🔶 = CLv1.
+- Derives Status (`Deprecated` if deprecated section OR badge OR `[Deprecated]` prefix; otherwise `Active`).
+- Normalizes Vendor (`Microsoft` → `Microsoft Corporation`), Method (empty/Unknown → `Native`), Table Count (first integer), and Solution.
+- Resolves Description via the connector slug against the ZIP-extracted descriptions (graceful degradation when the ZIP is missing).
+- Resolves Domain and Subdomain via `Resolve-Domain` (see 6.3).
+
+### 6.3 Domain Categorization
+
+Domain assignment is data-driven and lives entirely in ParseConnectors/domain-map.json — the parser never hardcodes domain lookups.
+
+Map structure:
+
+- Normal keys use the format `"Domain / Subdomain"` and hold a list of match patterns (vendor/product name fragments). The key is split on the LAST ` / ` so multi-level domains such as `Network / Perimeter / Firewall & Gateway` resolve correctly.
+- A reserved `_multiDomain` block maps a single connector pattern to multiple `"Domain / Subdomain"` pairs (comma separated), producing comma-separated Domain and Subdomain output values.
+
+`Get-DomainMap` flattens the file into a single `pattern -> { Domain, Subdomain }` table. `Resolve-Domain` then matches per connector:
+
+- Case-insensitive substring match (`-like "*pattern*"`) against the connector name.
+- First matching pattern wins (hashtable iteration order is not guaranteed, so overly generic patterns can shadow specific ones — keep patterns specific).
+- Multi-domain matches are expanded into comma-separated Domain/Subdomain values.
+- No match falls back to `{ Domain = 'Other'; Subdomain = 'Other' }`.
+
+Dynamic categorization behavior:
+
+- A new connector that is a variant of a known vendor is categorized automatically because the existing substring pattern still matches (for example, a new `CrowdStrike …` connector resolves under `Endpoint / Detection & Response`). One pattern covers an entire product family.
+- A genuinely new/unknown vendor lands in the `Other` bucket. It is never dropped, but it stays uncategorized until a pattern is added to domain-map.json. There is no heuristic or ML inference — curation is a deliberate JSON edit.
+
+### 6.4 Domain Map Maintenance Guide
+
+Use this checklist when new connectors appear (typically surfacing as `Domain = Other` after a refresh) or when the upstream taxonomy changes.
+
+1. Identify uncategorized connectors. After a refresh, filter the Con watchlist (or workbook Tab 1) for `Domain = Other` to see what needs curation.
+2. Choose the correct domain/subdomain. Reuse an existing `"Domain / Subdomain"` key when possible; only introduce a new key when a genuinely new taxonomy branch is required.
+3. Add a match pattern. Insert the most specific stable fragment of the connector/vendor name into the matching key's array in func-watchlist-parser/ParseConnectors/domain-map.json. Patterns are case-insensitive substrings, so prefer a distinctive vendor/product token (for example `"Cyera DSPM"`) over a generic word.
+4. For cross-cutting connectors, add the pattern under `_multiDomain` with comma-separated `"Domain / Subdomain"` pairs instead of a normal key.
+5. Avoid shadowing. Because the first matching pattern wins, do not add broad fragments (for example a bare `"Cisco"`) that would capture connectors belonging to other subdomains.
+6. Validate locally. Run the parser test suite (func-watchlist-parser/Tests/ParseConnectors.Tests.ps1) to confirm the new mapping resolves as expected and existing assertions still pass.
+7. Refresh and verify. Trigger the Logic App refresh and confirm the connector now resolves to the intended Domain/Subdomain and no longer appears as `Other`.
+
+Maintenance rules:
+
+- Keep all domain logic in domain-map.json; never add domain conditionals to run.ps1.
+- Keep the `"Domain / Subdomain"` key format and the `_multiDomain` block intact (the loader depends on them).
+- When a mapping change alters parser behavior, update the tests in the same change (per repository convention).
 
 ---
 
