@@ -2,6 +2,38 @@
 
 ## To Do
 
+### 🔲 21 — Workbook Feedback Function for Incorrect Domain Mappings
+
+- tags: [workbook, domain-map, feedback, ux]
+- priority: low
+- status: backlog
+
+```md
+Add a reporting/feedback function in the workbook so users can flag a connector whose Domain/Subdomain mapping is wrong, feeding curation of ParseConnectors/domain-map.json.
+
+GOAL:
+Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1.
+
+PROPOSED DESIGN (to refine before implementation):
+- Add a "Report incorrect mapping" affordance in the Tab 1 connector detail card (group-AvailableConnectors).
+- Capture context automatically: Connector Name, Connector ID, current Domain, current Subdomain, Source Version.
+- Let the user provide the suggested correct Domain / Subdomain (free text or dropdown sourced from the existing taxonomy).
+- Routing options to evaluate:
+  a) Write feedback rows to a dedicated Sentinel watchlist (e.g. Con_Feedback) via an ARM action / Logic App.
+  b) Deep link (mailto/Teams/GitHub issue template) pre-filled with the captured context.
+- Maintainer workflow: periodically review feedback and update domain-map.json patterns accordingly (per README/architecture §6.4 maintenance guide).
+
+OPEN QUESTIONS:
+- Preferred routing target (watchlist vs. external link vs. GitHub issue)?
+- Should feedback be anonymous or capture the submitting user?
+- Any governance/RBAC constraints on writing a feedback watchlist?
+
+ACCEPTANCE (draft):
+- User can submit a mapping correction for any listed connector without leaving the workbook.
+- Captured payload includes connector identity + current vs. suggested domain.
+- Submission path is documented and the maintenance loop is reflected in docu.md and architecture.md once implemented.
+```
+
 ## In Progress
 
 ## Done
