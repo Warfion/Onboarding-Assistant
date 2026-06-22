@@ -38,6 +38,25 @@ ACCEPTANCE (draft):
 
 ## Done
 
+### ✅ 22 — Document Installed-Connector Detection and Key Normalization
+
+- tags: [documentation, workbook, coverage, sync-docs]
+- priority: low
+- status: complete
+
+```md
+Made Tab 3 installed-connector detection traceable by documenting the exact SentinelHealth logic.
+
+DELIVERED:
+✅ Added doc/architecture.md section 5.4 with the 7-day SentinelHealth detection query, three-key normalization (exact, -suffix stripped, "connector" stripped), Con join, and maturity thresholds.
+✅ Expanded doc/docu.md section 4.3 data semantics with the install definition, health-monitoring prerequisite, key-expansion detail, and maturity tier thresholds.
+✅ Bumped doc versions (architecture 2.6, docu 2.6) and added a status row in docu.md.
+
+INVENTORY DELTA:
+- Added: none
+- Removed: none
+```
+
 ### ✅ 20 — Sync-Docs Audit: File Inventory Alignment
 
 - tags: [documentation, sync-docs, audit]

@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.5
-Last Updated: 2026-06-21
+Version: 2.6
+Last Updated: 2026-06-22
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -142,7 +142,10 @@ Major elements:
 
 Data semantics:
 
-- Coverage analysis joins SentinelHealth connector names to Con Connector ID using normalized key expansion
+- A connector counts as installed only when it emitted a SentinelHealth event within the last 7 days (`SentinelResourceType == "Data connector"`, `distinct SentinelResourceName`); configured-but-silent connectors are not counted
+- Requires Sentinel auditing and health monitoring to be enabled, otherwise Tab 3 renders no signals
+- Coverage analysis joins SentinelHealth connector names to Con Connector ID using normalized key expansion: each health name expands into three candidate keys (lowercased exact name, trailing `-suffix` stripped, trailing `connector` word stripped) and is matched against `tolower(Connector ID)`
+- Maturity tier is derived from the installed count (>=5 Early, >=15 Productive, >=40 Mature SOC, >=80 Enterprise, otherwise Initial)
 - Domain and Subdomain fields support multi-value splits for aggregation and drilldown
 
 ---
@@ -240,6 +243,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Watchlist refresh automation | Complete |
 | Parser robustness (nested brackets and escaped pipes) | Complete |
 | Parsing and domain categorization documented (README + architecture + docu) | Complete |
+| Installed-connector detection and key normalization documented (architecture 5.4 + docu 4.3) | Complete |
 | Cross-resource-group workspace deployment support | Complete |
 | Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
 | Reset-flow consolidation and split-RG cleanup targeting | Complete |

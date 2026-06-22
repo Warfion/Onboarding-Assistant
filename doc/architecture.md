@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.5
-Updated: 2026-06-21
+Version: 2.6
+Updated: 2026-06-22
 
 ---
 
@@ -145,6 +145,62 @@ Coverage by Domain and Subdomain table
   -> show StatusFilter (All | Installed | Not installed)
   -> render connector detail table for selected subdomain
 ```
+
+### 5.4 Installed-Connector Detection and Key Normalization
+
+Installed connectors are not read from a deployment or configuration API. They
+are derived entirely from health telemetry: a connector counts as installed
+(active) when it emitted at least one event into the SentinelHealth table within
+the lookback window. A configured but silent connector does not appear.
+
+Detection query (shared shape across all Tab 3 elements):
+
+```kql
+SentinelHealth
+| where TimeGenerated > ago(7d)
+| where SentinelResourceType == "Data connector"
+| distinct SentinelResourceName
+```
+
+- Lookback window: 7 days (fixed). installedCount = count of distinct
+  SentinelResourceName.
+- Prerequisite: Sentinel auditing and health monitoring must be enabled, or the
+  SentinelHealth table is empty and Tab 3 renders no signals.
+
+Key normalization (fuzzy match to the Con catalog). Because health resource
+names rarely equal catalog Connector IDs, each installed name expands into
+multiple candidate keys:
+
+```kql
+| extend Keys = pack_array(
+    tolower(SentinelResourceName),                                 // exact, lowercased
+    tolower(extract("^(.+?)-[^-]+$", 1, SentinelResourceName)),    // strip trailing -suffix
+    replace_regex(tolower(SentinelResourceName), "connector$", "")) // strip trailing "connector"
+| mv-expand InstalledKey = Keys to typeof(string)
+| where isnotempty(InstalledKey)
+| distinct InstalledKey
+```
+
+This absorbs region/GUID suffixes and "…Connector" word endings.
+
+Join to catalog. The Con watchlist Connector ID is the bridge key:
+
+```kql
+let catalog = _GetWatchlist('Con')
+| project ConnectorID = column_ifexists("Connector ID", ""),
+          Domain = column_ifexists("Domain", "Other")
+| extend CatalogKey = tolower(ConnectorID);
+catalog
+| join kind=leftouter installed on $left.CatalogKey == $right.InstalledKey
+| extend Installed = isnotempty(InstalledKey)
+```
+
+- Maturity tier thresholds on installedCount: >=5 Early, >=15 Productive,
+  >=40 Mature SOC, >=80 Enterprise, otherwise Initial.
+- Domains Covered (X / 11): inner join, Domain split on comma, Other excluded,
+  distinct domains counted.
+- Coverage tables use the leftouter join so every catalog connector stays
+  visible; Installed is true only where a normalized key matched.
 
 ---
 
