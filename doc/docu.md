@@ -289,6 +289,7 @@ Current workspace files:
 | LICENSE | Project license |
 | Onboarding Assistant.workbook | Workbook definition |
 | README.md | Project overview and deployment guidance |
+| .gitignore | Git ignore rules (excludes local secrets and developer tooling) |
 | .github/copilot-instructions.md | Project coding and sync rules |
 | .github/skills/sync-docs/SKILL.md | Documentation sync workflow |
 | .github/workflows/verify-bicep-artifact-sync.yml | CI check for Bicep/ARM artifact sync |

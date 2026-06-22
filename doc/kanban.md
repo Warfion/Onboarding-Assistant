@@ -6,6 +6,25 @@
 
 ## Done
 
+### ✅ 20 — Sync-Docs Audit: File Inventory Alignment
+
+- tags: [documentation, sync-docs, audit]
+- priority: low
+- status: complete
+
+```md
+Ran a full sync-docs audit (Mode B) after the parsing/categorization documentation change and corrected file inventory drift.
+
+DELIVERED:
+✅ Validated doc/docu.md §10 File Inventory against tracked workspace files (git ls-files).
+✅ Confirmed schema consistency (docu.md §5, architecture.md §9.1, run.ps1) and that scripts/context7/* are intentionally gitignored and correctly excluded from inventory.
+✅ Added the previously missing .gitignore entry to doc/docu.md §10.
+
+INVENTORY DELTA:
+- Added: .gitignore (to doc/docu.md §10 File Inventory)
+- Removed: none
+```
+
 ### ✅ 19 — Document Parsing and Domain Categorization + Maintenance Guide
 
 - tags: [documentation, parser, domain-map, sync-docs]
