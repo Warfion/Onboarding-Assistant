@@ -4,32 +4,45 @@
 
 ### 🔲 21 — Workbook Feedback Function for Incorrect Domain Mappings
 
-  - tags: [workbook, domain-map, feedback, ux]
+  - tags: [workbook, domain-map, feedback, github, ux]
   - priority: low
     ```md
     Add a reporting/feedback function in the workbook so users can flag a connector whose Domain/Subdomain mapping is wrong, feeding curation of ParseConnectors/domain-map.json.
 
     GOAL:
-    Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1.
+    Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1 and file them as GitHub issues for triage.
 
-    PROPOSED DESIGN (to refine before implementation):
+    CHOSEN ROUTING — GitHub Issues (decided 2026-06-23):
+    Feedback is reported to the GitHub repo (Warfion/Onboarding-Assistant) as an issue. Implemented in two stages:
+
+    OPTION A — Prefilled GitHub issue deep link (MVP, no secrets):
     - Add a "Report incorrect mapping" affordance in the Tab 1 connector detail card (group-AvailableConnectors).
     - Capture context automatically: Connector Name, Connector ID, current Domain, current Subdomain, Source Version.
-    - Let the user provide the suggested correct Domain / Subdomain (free text or dropdown sourced from the existing taxonomy).
-    - Routing options to evaluate:
-      a) Write feedback rows to a dedicated Sentinel watchlist (e.g. Con_Feedback) via an ARM action / Logic App.
-      b) Deep link (mailto/Teams/GitHub issue template) pre-filled with the captured context.
-    - Maintainer workflow: periodically review feedback and update domain-map.json patterns accordingly (per README/architecture §6.4 maintenance guide).
+    - Build a GitHub new-issue URL with prefilled title, body, and labels, e.g.:
+      https://github.com/Warfion/Onboarding-Assistant/issues/new?labels=domain-map,feedback&title=<connector>&body=<context+suggestion>
+    - Render it as a link in the workbook (link column renderer or parameter-driven link element).
+    - User reviews the prefilled issue in GitHub and clicks Submit (requires GitHub login + one click).
+    - Rationale: no PAT/Key Vault/backend auth, fully WAF-compliant, immediately shippable inside the workbook.
+
+    OPTION B — Fully automatic via Logic App (later upgrade):
+    - Workbook ARM Action -> Logic App (HTTP request trigger) -> GitHub Issues API (POST /repos/Warfion/Onboarding-Assistant/issues).
+    - Auth: GitHub App installation token (preferred) or PAT stored in Key Vault; Logic App uses Managed Identity to read the secret.
+    - Must add abuse/rate-limit guardrails (any workbook user could open issues) and payload validation.
+    - More infra (Bicep) + maintenance; defer until Option A proves the loop is used.
+
+    ISSUE PAYLOAD (both options):
+    - Title: "Domain mapping: <Connector Name> (<Connector ID>)"
+    - Labels: domain-map, feedback (Option B may add bug)
+    - Body: Connector Name, Connector ID, current Domain/Subdomain, Source Version, suggested Domain/Subdomain, free-text note.
 
     OPEN QUESTIONS:
-    - Preferred routing target (watchlist vs. external link vs. GitHub issue)?
-    - Should feedback be anonymous or capture the submitting user?
-    - Any governance/RBAC constraints on writing a feedback watchlist?
+    - Suggested correction input: free text vs. dropdown sourced from the existing taxonomy?
+    - Label convention — reuse `feedback` only, or add `bug` for clearly wrong mappings?
 
-    ACCEPTANCE (draft):
-    - User can submit a mapping correction for any listed connector without leaving the workbook.
-    - Captured payload includes connector identity + current vs. suggested domain.
-    - Submission path is documented and the maintenance loop is reflected in docu.md and architecture.md once implemented.
+    ACCEPTANCE (Option A):
+    - User can open a prefilled GitHub issue for any listed connector directly from Tab 1.
+    - Prefilled issue includes connector identity (Name + ID), current vs. suggested domain, and Source Version.
+    - Routing + maintenance loop documented in docu.md and architecture.md (§6.4) once implemented.
     ```
 
 ## In Progress
