@@ -4,35 +4,33 @@
 
 ### 🔲 21 — Workbook Feedback Function for Incorrect Domain Mappings
 
-- tags: [workbook, domain-map, feedback, ux]
-- priority: low
-- status: backlog
+  - tags: [workbook, domain-map, feedback, ux]
+  - priority: low
+    ```md
+    Add a reporting/feedback function in the workbook so users can flag a connector whose Domain/Subdomain mapping is wrong, feeding curation of ParseConnectors/domain-map.json.
 
-```md
-Add a reporting/feedback function in the workbook so users can flag a connector whose Domain/Subdomain mapping is wrong, feeding curation of ParseConnectors/domain-map.json.
+    GOAL:
+    Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1.
 
-GOAL:
-Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1.
+    PROPOSED DESIGN (to refine before implementation):
+    - Add a "Report incorrect mapping" affordance in the Tab 1 connector detail card (group-AvailableConnectors).
+    - Capture context automatically: Connector Name, Connector ID, current Domain, current Subdomain, Source Version.
+    - Let the user provide the suggested correct Domain / Subdomain (free text or dropdown sourced from the existing taxonomy).
+    - Routing options to evaluate:
+      a) Write feedback rows to a dedicated Sentinel watchlist (e.g. Con_Feedback) via an ARM action / Logic App.
+      b) Deep link (mailto/Teams/GitHub issue template) pre-filled with the captured context.
+    - Maintainer workflow: periodically review feedback and update domain-map.json patterns accordingly (per README/architecture §6.4 maintenance guide).
 
-PROPOSED DESIGN (to refine before implementation):
-- Add a "Report incorrect mapping" affordance in the Tab 1 connector detail card (group-AvailableConnectors).
-- Capture context automatically: Connector Name, Connector ID, current Domain, current Subdomain, Source Version.
-- Let the user provide the suggested correct Domain / Subdomain (free text or dropdown sourced from the existing taxonomy).
-- Routing options to evaluate:
-  a) Write feedback rows to a dedicated Sentinel watchlist (e.g. Con_Feedback) via an ARM action / Logic App.
-  b) Deep link (mailto/Teams/GitHub issue template) pre-filled with the captured context.
-- Maintainer workflow: periodically review feedback and update domain-map.json patterns accordingly (per README/architecture §6.4 maintenance guide).
+    OPEN QUESTIONS:
+    - Preferred routing target (watchlist vs. external link vs. GitHub issue)?
+    - Should feedback be anonymous or capture the submitting user?
+    - Any governance/RBAC constraints on writing a feedback watchlist?
 
-OPEN QUESTIONS:
-- Preferred routing target (watchlist vs. external link vs. GitHub issue)?
-- Should feedback be anonymous or capture the submitting user?
-- Any governance/RBAC constraints on writing a feedback watchlist?
-
-ACCEPTANCE (draft):
-- User can submit a mapping correction for any listed connector without leaving the workbook.
-- Captured payload includes connector identity + current vs. suggested domain.
-- Submission path is documented and the maintenance loop is reflected in docu.md and architecture.md once implemented.
-```
+    ACCEPTANCE (draft):
+    - User can submit a mapping correction for any listed connector without leaving the workbook.
+    - Captured payload includes connector identity + current vs. suggested domain.
+    - Submission path is documented and the maintenance loop is reflected in docu.md and architecture.md once implemented.
+    ```
 
 ## In Progress
 
@@ -40,149 +38,134 @@ ACCEPTANCE (draft):
 
 ### ✅ 22 — Document Installed-Connector Detection and Key Normalization
 
-- tags: [documentation, workbook, coverage, sync-docs]
-- priority: low
-- status: complete
+  - tags: [documentation, workbook, coverage, sync-docs]
+  - priority: low
+    ```md
+    Made Tab 3 installed-connector detection traceable by documenting the exact SentinelHealth logic.
 
-```md
-Made Tab 3 installed-connector detection traceable by documenting the exact SentinelHealth logic.
+    DELIVERED:
+    ✅ Added doc/architecture.md section 5.4 with the 7-day SentinelHealth detection query, three-key normalization (exact, -suffix stripped, "connector" stripped), Con join, and maturity thresholds.
+    ✅ Expanded doc/docu.md section 4.3 data semantics with the install definition, health-monitoring prerequisite, key-expansion detail, and maturity tier thresholds.
+    ✅ Bumped doc versions (architecture 2.6, docu 2.6) and added a status row in docu.md.
 
-DELIVERED:
-✅ Added doc/architecture.md section 5.4 with the 7-day SentinelHealth detection query, three-key normalization (exact, -suffix stripped, "connector" stripped), Con join, and maturity thresholds.
-✅ Expanded doc/docu.md section 4.3 data semantics with the install definition, health-monitoring prerequisite, key-expansion detail, and maturity tier thresholds.
-✅ Bumped doc versions (architecture 2.6, docu 2.6) and added a status row in docu.md.
-
-INVENTORY DELTA:
-- Added: none
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: none
+    - Removed: none
+    ```
 
 ### ✅ 20 — Sync-Docs Audit: File Inventory Alignment
 
-- tags: [documentation, sync-docs, audit]
-- priority: low
-- status: complete
+  - tags: [documentation, sync-docs, audit]
+  - priority: low
+    ```md
+    Ran a full sync-docs audit (Mode B) after the parsing/categorization documentation change and corrected file inventory drift.
 
-```md
-Ran a full sync-docs audit (Mode B) after the parsing/categorization documentation change and corrected file inventory drift.
+    DELIVERED:
+    ✅ Validated doc/docu.md §10 File Inventory against tracked workspace files (git ls-files).
+    ✅ Confirmed schema consistency (docu.md §5, architecture.md §9.1, run.ps1) and that scripts/context7/* are intentionally gitignored and correctly excluded from inventory.
+    ✅ Added the previously missing .gitignore entry to doc/docu.md §10.
 
-DELIVERED:
-✅ Validated doc/docu.md §10 File Inventory against tracked workspace files (git ls-files).
-✅ Confirmed schema consistency (docu.md §5, architecture.md §9.1, run.ps1) and that scripts/context7/* are intentionally gitignored and correctly excluded from inventory.
-✅ Added the previously missing .gitignore entry to doc/docu.md §10.
-
-INVENTORY DELTA:
-- Added: .gitignore (to doc/docu.md §10 File Inventory)
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: .gitignore (to doc/docu.md §10 File Inventory)
+    - Removed: none
+    ```
 
 ### ✅ 19 — Document Parsing and Domain Categorization + Maintenance Guide
 
-- tags: [documentation, parser, domain-map, sync-docs]
-- priority: medium
-- status: complete
+  - tags: [documentation, parser, domain-map, sync-docs]
+  - priority: medium
+    ```md
+    Made the connector parsing logic and domain categorization traceable, and added a maintenance guide for the domain map.
 
-```md
-Made the connector parsing logic and domain categorization traceable, and added a maintenance guide for the domain map.
+    DELIVERED:
+    ✅ Documented the parsing pipeline (line-by-line state machine, row normalization, badge/flag handling) in doc/architecture.md section 6.2.
+    ✅ Documented data-driven domain categorization, substring matching, _multiDomain, and the Other fallback in doc/architecture.md section 6.3.
+    ✅ Added a domain map maintenance guide (curation checklist + rules) in doc/architecture.md section 6.4, README.md, and doc/docu.md sections 5.1/5.2.
+    ✅ Bumped doc versions (architecture 2.5, docu 2.5) and added a status row in docu.md.
 
-DELIVERED:
-✅ Documented the parsing pipeline (line-by-line state machine, row normalization, badge/flag handling) in doc/architecture.md section 6.2.
-✅ Documented data-driven domain categorization, substring matching, _multiDomain, and the Other fallback in doc/architecture.md section 6.3.
-✅ Added a domain map maintenance guide (curation checklist + rules) in doc/architecture.md section 6.4, README.md, and doc/docu.md sections 5.1/5.2.
-✅ Bumped doc versions (architecture 2.5, docu 2.5) and added a status row in docu.md.
-
-INVENTORY DELTA:
-- Added: none
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: none
+    - Removed: none
+    ```
 
 ### ✅ 18 — Workbook Metadata Fail-Safe and Reset Script PID Fix
 
-- tags: [workbook, scripts, reliability, sync-docs]
-- priority: high
-- status: complete
+  - tags: [workbook, scripts, reliability, sync-docs]
+  - priority: high
+    ```md
+    Hardened workbook parameter behavior for not-ready workspaces and fixed reset script execution reliability.
 
-```md
-Hardened workbook parameter behavior for not-ready workspaces and fixed reset script execution reliability.
+    DELIVERED:
+    ✅ Made `RefreshWorkflowIdFromMeta` query fault-tolerant when Con_Meta does not exist, preventing query-failed parameter exposure in workspace-not-ready state.
+    ✅ Fixed PowerShell variable-name collision in reset script (`$pid` vs `$PID`) that caused read-only variable overwrite errors.
+    ✅ Verified reset dry-run execution with `-WorkspaceName`, `-Verbose`, and `-WhatIf` after fix.
+    ✅ Confirmed split-RG cleanup enumeration still works after the PID fix.
 
-DELIVERED:
-✅ Made `RefreshWorkflowIdFromMeta` query fault-tolerant when Con_Meta does not exist, preventing query-failed parameter exposure in workspace-not-ready state.
-✅ Fixed PowerShell variable-name collision in reset script (`$pid` vs `$PID`) that caused read-only variable overwrite errors.
-✅ Verified reset dry-run execution with `-WorkspaceName`, `-Verbose`, and `-WhatIf` after fix.
-✅ Confirmed split-RG cleanup enumeration still works after the PID fix.
-
-INVENTORY DELTA:
-- Added: none
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: none
+    - Removed: none
+    ```
 
 ### ✅ 17 — Reset Flow Consolidation and Split-RG Cleanup Targeting
 
-- tags: [deployment, scripts, tests, sync-docs]
-- priority: high
-- status: complete
+  - tags: [deployment, scripts, tests, sync-docs]
+  - priority: high
+    ```md
+    Consolidated cleanup operations into a single reset flow and added deterministic support for split resource group deployments.
 
-```md
-Consolidated cleanup operations into a single reset flow and added deterministic support for split resource group deployments.
+    DELIVERED:
+    ✅ Removed standalone stale-assignment cleanup script and consolidated cleanup behavior into scripts/Reset-OnboardingAssistantDeployment.ps1.
+    ✅ Added WorkspaceName-based workspace resolution support for reset operations.
+    ✅ Added explicit DeploymentResourceGroupName targeting so stack resources can be cleaned when hosted outside the workspace resource group.
+    ✅ Added/updated script-level Pester tests for reset-flow resolution, ambiguity handling, and safe dry-run behavior.
+    ✅ Updated doc/docu.md and doc/architecture.md to reflect the consolidated reset model and split-RG cleanup guidance.
 
-DELIVERED:
-✅ Removed standalone stale-assignment cleanup script and consolidated cleanup behavior into scripts/Reset-OnboardingAssistantDeployment.ps1.
-✅ Added WorkspaceName-based workspace resolution support for reset operations.
-✅ Added explicit DeploymentResourceGroupName targeting so stack resources can be cleaned when hosted outside the workspace resource group.
-✅ Added/updated script-level Pester tests for reset-flow resolution, ambiguity handling, and safe dry-run behavior.
-✅ Updated doc/docu.md and doc/architecture.md to reflect the consolidated reset model and split-RG cleanup guidance.
-
-INVENTORY DELTA:
-- Added: func-watchlist-parser/Tests/DeploymentScripts.Tests.ps1
-- Removed: scripts/Cleanup-StaleSentinelContributorAssignments.ps1
-```
+    INVENTORY DELTA:
+    - Added: func-watchlist-parser/Tests/DeploymentScripts.Tests.ps1
+    - Removed: scripts/Cleanup-StaleSentinelContributorAssignments.ps1
+    ```
 
 ### ✅ 16 — Workbook Discoverability Scope Alignment
 
-- tags: [deployment, workbook, sync-docs]
-- priority: high
-- status: complete
+  - tags: [deployment, workbook, sync-docs]
+  - priority: high
+    ```md
+    Aligned workbook deployment scope with Microsoft Sentinel discoverability requirements.
 
-```md
-Aligned workbook deployment scope with Microsoft Sentinel discoverability requirements.
+    DELIVERED:
+    ✅ Moved workbook resource deployment into infra/workspace-resources.bicep so it is created in the Sentinel workspace resource group.
+    ✅ Removed workbook deployment from infra/main.bicep stack resource group scope.
+    ✅ Rebuilt infra/main.json from infra/main.bicep.
+    ✅ Updated README.md, doc/docu.md, and doc/architecture.md to reflect workspace-scoped workbook placement.
+    ✅ Added doc/decision-tree.drawio manual-update flag for topology parity (workbook now originates from workspace-scoped module).
 
-DELIVERED:
-✅ Moved workbook resource deployment into infra/workspace-resources.bicep so it is created in the Sentinel workspace resource group.
-✅ Removed workbook deployment from infra/main.bicep stack resource group scope.
-✅ Rebuilt infra/main.json from infra/main.bicep.
-✅ Updated README.md, doc/docu.md, and doc/architecture.md to reflect workspace-scoped workbook placement.
-✅ Added doc/decision-tree.drawio manual-update flag for topology parity (workbook now originates from workspace-scoped module).
-
-INVENTORY DELTA:
-- Added: none
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: none
+    - Removed: none
+    ```
 
 ### ✅ 15 — Cross-Resource-Group Workspace Deployment Support
 
-- tags: [deployment, infrastructure, workbook, sync-docs]
-- priority: high
-- status: complete
+  - tags: [deployment, infrastructure, workbook, sync-docs]
+  - priority: high
+    ```md
+    Enabled deployments where the Sentinel workspace lives in a different subscription or resource group than the deployment stack.
 
-```md
-Enabled deployments where the Sentinel workspace lives in a different subscription or resource group than the deployment stack.
+    DELIVERED:
+    ✅ Added required workspaceSubscriptionId and workspaceResourceGroupName deployment parameters in infra/main.bicep.✅ Scoped the existing Log Analytics workspace reference to the selected workspace subscription and resource group.
+    ✅ Passed the actual workspace subscription/resource group into the Logic App refresh workflow parameters.
+    ✅ Updated README.md, doc/docu.md, and doc/architecture.md to document the cross-resource-group deployment path.
+    ✅ Rebuilt the deployment template so the Deploy to Azure button targets the workspace correctly.
 
-DELIVERED:
-✅ Added required workspaceSubscriptionId and workspaceResourceGroupName deployment parameters in infra/main.bicep.✅ Scoped the existing Log Analytics workspace reference to the selected workspace subscription and resource group.
-✅ Passed the actual workspace subscription/resource group into the Logic App refresh workflow parameters.
-✅ Updated README.md, doc/docu.md, and doc/architecture.md to document the cross-resource-group deployment path.
-✅ Rebuilt the deployment template so the Deploy to Azure button targets the workspace correctly.
-
-INVENTORY DELTA:
-- Added: infra/workspace-resources.bicep
-- Removed: none
-```
+    INVENTORY DELTA:
+    - Added: infra/workspace-resources.bicep
+    - Removed: none
+    ```
 
 ### ✅ 7 — GitHub Repo + README with Deploy to Azure Button
 
   - tags: [deployment, github, documentation]
   - priority: medium
-  - status: complete
    ```md
    Published and validated the one-click deployment experience for the Sentinel Data Source Onboarding Assistant.
 
@@ -202,7 +185,6 @@ INVENTORY DELTA:
 
   - tags: [workbook, guardrails, ux, sync-docs]
   - priority: high
-  - status: complete
    ```md
    Implemented strict workspace eligibility behavior for safer first-run experience.
 
@@ -223,7 +205,6 @@ INVENTORY DELTA:
 
   - tags: [workbook, tab1, reliability, sync-docs]
   - priority: high
-  - status: complete
    ```md
    Synchronized workbook refresh behavior and status rendering with recent runtime fixes.
 
@@ -244,7 +225,6 @@ INVENTORY DELTA:
 
   - tags: [documentation, governance, inventory]
   - priority: high
-  - status: complete
    ```md
    Synchronized documentation inventory after CI/workflow maintenance changes.
 
@@ -261,7 +241,6 @@ INVENTORY DELTA:
 
   - tags: [documentation, governance, sync-docs]
   - priority: high
-  - status: complete
    ```md
    Synchronized governing documentation with current workbook and workspace state.
 
@@ -283,7 +262,6 @@ INVENTORY DELTA:
 
   - tags: [workbook, tab3, posture]
   - priority: medium
-  - status: complete
     ```md
     Replaced misleading Coverage Summary ("X / 600 = Y%") with a
     maturity-based assessment on Tab 3.
@@ -323,7 +301,6 @@ INVENTORY DELTA:
 
   - tags: [workbook, ux, tab1]
   - priority: medium
-  - status: complete
     ```md
     Replaced free-text search box with a watchlist-sourced dropdown.
 
@@ -350,7 +327,6 @@ INVENTORY DELTA:
 
   - tags: [function, parser, bugfix]
   - priority: high
-  - status: complete
     ```md
     Two parser bugs in `ParseConnectors/run.ps1` that produced malformed
     watchlist rows for ~30 connectors.
@@ -385,7 +361,6 @@ INVENTORY DELTA:
 
   - tags: [workbook, tab3, posture]
   - priority: medium
-  - status: complete
     ```md
     Domain-based security coverage heatmap with interactive drill-down.
 
@@ -405,7 +380,6 @@ INVENTORY DELTA:
 
   - tags: [data, watchlist, automation]
   - priority: high
-  - status: complete
     ```md
     Azure Function (ParseConnectors) parses sentinelninja GitHub connector catalog
     into a Sentinel watchlist, orchestrated by a weekly Logic App.

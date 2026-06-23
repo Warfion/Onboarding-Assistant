@@ -93,6 +93,23 @@ When the user describes a new improvement idea:
 - **Language:** All documents are in English.
 - **Never delete content** without user confirmation — append, update, or move to Done.
 - **Kanban structure:** To Do / In Progress / Done. Each item has a number (#N), priority, tags, and a design spec in a fenced markdown code block.
+- **Kanban viewer format (CRITICAL):** `doc/kanban.md` is rendered by the `holooooo.markdown-kanban` extension. Columns are `## ` headings, each task is a `### ` heading, and **task attributes and the design spec must be indented under the task** or the board explodes (every column-0 `- ` becomes a separate card). Required layout:
+
+  ```md
+  ## Done
+
+  ### ✅ N — Title
+
+    - tags: [a, b, c]
+    - priority: high
+      ```md
+      Design spec text. Bullets inside this fenced block are safe.
+      ```
+  ```
+
+  Rules:
+  - Attribute bullets indented exactly **2 spaces**; the ```` ```md ```` design-spec fence indented **4 spaces**; **no blank line** between the last attribute and the fence. Never place a `- ` at column 0 inside a task.
+  - **Only these attribute keys are supported:** `tags`, `priority`, `due`, `workload`, `defaultExpanded`, `steps`. Any other `- key:` line (e.g. `- status:`) is treated as card-terminating content — it ends the card *before* the ```` ```md ```` block, so the description silently disappears (clicking the card shows no details). Do **not** add unsupported attributes; encode status via the column (To Do / In Progress / Done).
 - **Kanban numbering:** Items are numbered sequentially (#1, #2, ... #N). Don't renumber existing items. New items get the next available number.
 - **Doc sections:** `docu.md` and `architecture.md` both use §1–§10. Don't renumber. Add subsections if needed.
 - **Show before writing:** Always present proposed changes and wait for confirmation before editing files.
