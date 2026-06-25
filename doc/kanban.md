@@ -2,6 +2,50 @@
 
 ## To Do
 
+### 🔲 23 — Export All Connectors as CSV
+
+  - tags: [workbook, export, csv, ux]
+  - priority: low
+    ```md
+    Add a way to export the connector catalog so the domain/subdomain assignments can be reviewed for correctness offline.
+
+    GOAL:
+    Two complementary uses:
+    - PRIMARY (maintainer): DOMAIN-MAPPING QA — a one-click bulk export of the Con watchlist so the assigned Domain/Subdomain can be checked, sorted, and filtered offline (e.g. in Excel) to spot wrong or `Other` categorizations at scale. Today this can only be inspected connector-by-connector on Tab 1. Feeds curation of ParseConnectors/domain-map.json and pairs with the per-connector feedback path (#21).
+    - SECONDARY (consumers): a general "export the connector list" convenience for sharing/offline reference.
+
+    DATA AVAILABILITY:
+    Domain and Subdomain are already stored per connector in the Con watchlist (the 12-column schema: Connector Name, Connector Description, Vendor, Method, Table Count, Solution, Status, Flags, Source Version, Domain, Subdomain, Connector ID). The export just surfaces these columns; no recomputation needed.
+
+    EXPORT COLUMN SET (decided):
+    Per connector, export: Connector Name, Vendor, Method, Solution, Domain, Subdomain, Status, Source Version, Connector ID. Exclude Connector Description (not needed for the export). The assigned Domain/Subdomain is always included.
+
+    BACKGROUND — native capability:
+    Azure Workbook query grids already expose a native "Export to Excel" action in the step toolbar (read mode), but it downloads .xlsx (not raw CSV) and only the columns currently projected by that grid. So a dedicated full-catalog grid + a true-CSV path are what's missing.
+
+    OPTION A — Full-catalog grid + native Excel export (MVP, no code):
+    - Add a "Full connector catalog" grid (collapsible section, e.g. on Tab 1 or a new "Export" section) querying _GetWatchlist('Con') and projecting all 12 columns.
+    - Users click the grid's built-in "Export to Excel" toolbar action -> .xlsx, then Save As CSV if CSV is strictly required.
+    - Rationale: zero new infra, fully WAF-compliant, immediately shippable inside the workbook.
+
+    OPTION B — True CSV via the existing Function output (later upgrade):
+    - ParseConnectors already emits a { csv, stats } contract. Surface that CSV directly (e.g. a "Download CSV" link to a blob the refresh pipeline writes, or an ARM Action returning the CSV) so users get a real .csv without the Excel round-trip.
+    - More plumbing (blob/SAS or Logic App step) + maintenance; defer until Option A proves demand.
+
+    REVIEW-FRIENDLY COLUMN ORDER:
+    - Lead with the columns that matter for domain QA: Connector Name, Vendor, Method, Solution, then Domain, Subdomain, followed by Status, Source Version, Connector ID.
+    - Optionally sort by Domain, Subdomain so mis-bucketed and `Other` connectors cluster together.
+
+    OPEN QUESTIONS:
+    - Placement: extend Tab 1, or add a dedicated "Export" / "Mapping Review" section/tab?
+    - Is .xlsx (Option A) acceptable for the review workflow, or is real .csv (Option B) a hard requirement?
+
+    ACCEPTANCE (Option A):
+    - A single grid lists every connector with the full column set, ordered/sorted for domain review.
+    - The maintainer can export the whole catalog in one action and sort/filter by Domain/Subdomain offline.
+    - Export feature documented in docu.md and architecture.md (§6.4) once implemented.
+    ```
+
 ### 🔲 21 — Workbook Feedback Function for Incorrect Domain Mappings
 
   - tags: [workbook, domain-map, feedback, github, ux]
@@ -10,39 +54,70 @@
     Add a reporting/feedback function in the workbook so users can flag a connector whose Domain/Subdomain mapping is wrong, feeding curation of ParseConnectors/domain-map.json.
 
     GOAL:
-    Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1 and file them as GitHub issues for triage.
+    Close the loop between consumers (workbook users) and maintainers of the domain map. Today, miscategorized or `Other` connectors are only discovered by manually scanning the Con watchlist; this item lets users surface mapping issues directly from Tab 1 and file them as prefilled GitHub issues for triage.
 
-    CHOSEN ROUTING — GitHub Issues (decided 2026-06-23):
-    Feedback is reported to the GitHub repo (Warfion/Onboarding-Assistant) as an issue. Implemented in two stages:
+    DEPENDS ON: #24 (Con_DomainMap watchlist) — the dependent Domain -> Subdomain dropdowns are sourced from it.
 
-    OPTION A — Prefilled GitHub issue deep link (MVP, no secrets):
-    - Add a "Report incorrect mapping" affordance in the Tab 1 connector detail card (group-AvailableConnectors).
-    - Capture context automatically: Connector Name, Connector ID, current Domain, current Subdomain, Source Version.
-    - Build a GitHub new-issue URL with prefilled title, body, and labels, e.g.:
-      https://github.com/Warfion/Onboarding-Assistant/issues/new?labels=domain-map,feedback&title=<connector>&body=<context+suggestion>
-    - Render it as a link in the workbook (link column renderer or parameter-driven link element).
-    - User reviews the prefilled issue in GitHub and clicks Submit (requires GitHub login + one click).
-    - Rationale: no PAT/Key Vault/backend auth, fully WAF-compliant, immediately shippable inside the workbook.
+    CHOSEN ROUTING — GitHub Issues, prefilled issues/new deep link (decided 2026-06-25):
+    No secrets/backend; the workbook renders a fully prefilled `issues/new` link the user submits with one click. Repo Warfion/Onboarding-Assistant is public, so any logged-in GitHub user can open the issue (the hint text notes "requires GitHub login"). The Logic-App/GitHub-API route stays a later upgrade (see #21 history / Option B below) only if abuse guardrails become necessary.
 
-    OPTION B — Fully automatic via Logic App (later upgrade):
-    - Workbook ARM Action -> Logic App (HTTP request trigger) -> GitHub Issues API (POST /repos/Warfion/Onboarding-Assistant/issues).
-    - Auth: GitHub App installation token (preferred) or PAT stored in Key Vault; Logic App uses Managed Identity to read the secret.
-    - Must add abuse/rate-limit guardrails (any workbook user could open issues) and payload validation.
-    - More infra (Bicep) + maintenance; defer until Option A proves the loop is used.
+    PLACEMENT (decided):
+    - Tab 1 connector detail card (group-AvailableConnectors): a feedback-process hint + a "Report incorrect mapping" link.
+    - Tab 3: a feedback-process hint + a wayfinder link that sets the tab parameter Tab=1 (active cross-tab navigation; the link does NOT pre-select a connector — single-parameter limit, user re-selects on Tab 1).
+    - The Tab 1 report link uses conditionalVisibility on SelectedConnector isNotEqualTo "" (only shown when a connector is selected); the Tab 3 wayfinder is always visible.
 
-    ISSUE PAYLOAD (both options):
+    CONTEXT CAPTURE (decided):
+    - A hidden KQL query on Con for the selected connector surfaces Connector ID, Subdomain, and Source Version (not projected on the card today).
+
+    SUGGESTED CORRECTION — two dependent dropdowns (decided):
+    - Domain dropdown -> filtered Subdomain dropdown, both sourced from the canonical taxonomy via the new Con_DomainMap watchlist (#24), so only valid Domain/Subdomain pairs are selectable (no free-text typos).
+
+    URL BUILD & ENCODING (decided):
+    - Build the complete issues/new URL server-side in KQL using url_encode_component() and export it as a single parameter (e.g. FeedbackIssueUrl) bound to the LinkItem. Workbook {param} substitution does NOT URL-encode, so the encoding must happen in KQL.
+
+    ISSUE PAYLOAD:
     - Title: "Domain mapping: <Connector Name> (<Connector ID>)"
-    - Labels: domain-map, feedback (Option B may add bug)
-    - Body: Connector Name, Connector ID, current Domain/Subdomain, Source Version, suggested Domain/Subdomain, free-text note.
+    - Labels: domain-map, feedback (must be pre-created in the repo, else the deep link silently drops them).
+    - Body: Connector Name, Connector ID, current Domain/Subdomain, Source Version, suggested Domain/Subdomain (from the dropdowns), free-text note.
 
-    OPEN QUESTIONS:
-    - Suggested correction input: free text vs. dropdown sourced from the existing taxonomy?
-    - Label convention — reuse `feedback` only, or add `bug` for clearly wrong mappings?
+    OPTION B — Fully automatic via Logic App (later upgrade, deferred):
+    - Workbook ARM Action -> Logic App (HTTP request trigger) -> GitHub Issues API (POST /repos/Warfion/Onboarding-Assistant/issues).
+    - Auth: GitHub App installation token (preferred) or PAT in Key Vault via Managed Identity; add abuse/rate-limit guardrails + payload validation.
+    - More infra (Bicep) + maintenance; only pursue if the public deep-link route proves insufficient.
 
-    ACCEPTANCE (Option A):
-    - User can open a prefilled GitHub issue for any listed connector directly from Tab 1.
-    - Prefilled issue includes connector identity (Name + ID), current vs. suggested domain, and Source Version.
+    PRE-WORK:
+    - Create the `domain-map` and `feedback` labels in the GitHub repo before shipping.
+
+    ACCEPTANCE:
+    - User can open a prefilled GitHub issue for any selected connector from Tab 1; Tab 3 points users to the Tab 1 flow.
+    - Suggested correction is chosen via dependent Domain/Subdomain dropdowns (valid values only).
+    - Prefilled issue includes connector identity (Name + ID), current vs. suggested domain, and Source Version, correctly URL-encoded.
     - Routing + maintenance loop documented in docu.md and architecture.md (§6.4) once implemented.
+    ```
+
+### 🔲 24 — Provide Con_DomainMap Watchlist (Function + Logic App + Bicep)
+
+  - tags: [function, logic-app, infra, watchlist, domain-map]
+  - priority: low
+    ```md
+    Publish the canonical domain taxonomy (ParseConnectors/domain-map.json) as a Sentinel watchlist Con_DomainMap so the workbook can drive valid Domain -> Subdomain dropdowns from a single source of truth. Prerequisite for #21.
+
+    GOAL:
+    Make the domain/subdomain taxonomy queryable inside the workbook without drift. domain-map.json lives only in the Function today; surfacing it as a watchlist lets #21's dependent dropdowns offer exactly the valid Domain/Subdomain pairs (errors excluded by construction).
+
+    WHY A WATCHLIST (not Con-distinct):
+    Con-distinct only contains Domain/Subdomain pairs currently used by at least one connector, so valid-but-unused subdomains would be missing from the dropdowns. The canonical map is complete; keeping one source (domain-map.json) avoids divergence.
+
+    SCOPE:
+    - Function (ParseConnectors/run.ps1): extend the output contract from { csv, stats } to { csv, stats, domainMapCsv }. domainMapCsv = distinct Domain,Subdomain derived from the domain-map.json keys (Get-DomainMap already splits "Domain / Subdomain" on the last " / "). Key column e.g. DomainSubdomainKey.
+    - Logic App (infra/logic-app-definition.json): add a second atomic PUT writing domainMapCsv to the Con_DomainMap watchlist (same fail-closed pattern as the existing Con PUT).
+    - Infra (infra/workspace-resources.bicep): add the Con_DomainMap watchlist resource (search key on the Domain/Subdomain key column).
+    - Tests (func-watchlist-parser/Tests/ParseConnectors.Tests.ps1): cover the new domainMapCsv field (shape, distinct pairs, header).
+
+    ACCEPTANCE:
+    - A refresh run populates Con_DomainMap with every canonical Domain/Subdomain pair from domain-map.json.
+    - _GetWatchlist('Con_DomainMap') returns the taxonomy for workbook dropdowns.
+    - Function output contract and new watchlist documented in docu.md + architecture.md (§6.4); file inventory in docu.md §10 updated.
     ```
 
 ## In Progress
