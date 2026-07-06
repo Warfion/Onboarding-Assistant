@@ -463,7 +463,7 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "---\r\n## List of all available Connectors\r\nUse the **Export to Excel** action in the grid's top-right toolbar to download the full connector catalog — including each connector's assigned **Domain** and **Subdomain**.\r\n---",
+                    "json": "---\r\n## List of all available Connectors\r\nTo download the full connector catalog (including each connector's assigned **Domain** and **Subdomain**), hover over the **title bar** of the grid below and click the **Export to Excel** icon that appears on the right.\r\n---",
                     "style": "info"
                   },
                   "name": "text-AllConnectorsHeader"
@@ -567,6 +567,7 @@
                     "version": "KqlItem/1.0",
                     "query": "_GetWatchlist('Con')\r\n| project ['Connector Name'], ['Vendor'], ['Method'], ['Solution'], ['Domain'], ['Subdomain'], ['Status'], ['Source Version'], ['Connector ID']\r\n| where '{ConnectorFilter}' == 'All'\r\n    or ('{ConnectorFilter}' == 'Deprecated' and Status == 'Deprecated')\r\n    or ('{ConnectorFilter}' == 'FirstParty' and Status != 'Deprecated' and Vendor has 'Microsoft')\r\n    or ('{ConnectorFilter}' == 'ThirdParty' and Status != 'Deprecated' and not(Vendor has 'Microsoft'))\r\n| sort by ['Domain'] asc, ['Subdomain'] asc, ['Connector Name'] asc",
                     "size": 0,
+                    "title": "All connectors — full catalog (hover the title bar → Export to Excel)",
                     "timeContext": {
                       "durationMs": 86400000
                     },
