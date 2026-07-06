@@ -2,50 +2,6 @@
 
 ## To Do
 
-### 🔲 23 — Export All Connectors as CSV
-
-  - tags: [workbook, export, csv, ux]
-  - priority: low
-    ```md
-    Add a way to export the connector catalog so the domain/subdomain assignments can be reviewed for correctness offline.
-
-    GOAL:
-    Two complementary uses:
-    - PRIMARY (maintainer): DOMAIN-MAPPING QA — a one-click bulk export of the Con watchlist so the assigned Domain/Subdomain can be checked, sorted, and filtered offline (e.g. in Excel) to spot wrong or `Other` categorizations at scale. Today this can only be inspected connector-by-connector on Tab 1. Feeds curation of ParseConnectors/domain-map.json and pairs with the per-connector feedback path (#21).
-    - SECONDARY (consumers): a general "export the connector list" convenience for sharing/offline reference.
-
-    DATA AVAILABILITY:
-    Domain and Subdomain are already stored per connector in the Con watchlist (the 12-column schema: Connector Name, Connector Description, Vendor, Method, Table Count, Solution, Status, Flags, Source Version, Domain, Subdomain, Connector ID). The export just surfaces these columns; no recomputation needed.
-
-    EXPORT COLUMN SET (decided):
-    Per connector, export: Connector Name, Vendor, Method, Solution, Domain, Subdomain, Status, Source Version, Connector ID. Exclude Connector Description (not needed for the export). The assigned Domain/Subdomain is always included.
-
-    BACKGROUND — native capability:
-    Azure Workbook query grids already expose a native "Export to Excel" action in the step toolbar (read mode), but it downloads .xlsx (not raw CSV) and only the columns currently projected by that grid. So a dedicated full-catalog grid + a true-CSV path are what's missing.
-
-    OPTION A — Full-catalog grid + native Excel export (MVP, no code):
-    - Add a "Full connector catalog" grid (collapsible section, e.g. on Tab 1 or a new "Export" section) querying _GetWatchlist('Con') and projecting all 12 columns.
-    - Users click the grid's built-in "Export to Excel" toolbar action -> .xlsx, then Save As CSV if CSV is strictly required.
-    - Rationale: zero new infra, fully WAF-compliant, immediately shippable inside the workbook.
-
-    OPTION B — True CSV via the existing Function output (later upgrade):
-    - ParseConnectors already emits a { csv, stats } contract. Surface that CSV directly (e.g. a "Download CSV" link to a blob the refresh pipeline writes, or an ARM Action returning the CSV) so users get a real .csv without the Excel round-trip.
-    - More plumbing (blob/SAS or Logic App step) + maintenance; defer until Option A proves demand.
-
-    REVIEW-FRIENDLY COLUMN ORDER:
-    - Lead with the columns that matter for domain QA: Connector Name, Vendor, Method, Solution, then Domain, Subdomain, followed by Status, Source Version, Connector ID.
-    - Optionally sort by Domain, Subdomain so mis-bucketed and `Other` connectors cluster together.
-
-    OPEN QUESTIONS:
-    - Placement: extend Tab 1, or add a dedicated "Export" / "Mapping Review" section/tab?
-    - Is .xlsx (Option A) acceptable for the review workflow, or is real .csv (Option B) a hard requirement?
-
-    ACCEPTANCE (Option A):
-    - A single grid lists every connector with the full column set, ordered/sorted for domain review.
-    - The maintainer can export the whole catalog in one action and sort/filter by Domain/Subdomain offline.
-    - Export feature documented in docu.md and architecture.md (§6.4) once implemented.
-    ```
-
 ### 🔲 21 — Workbook Feedback Function for Incorrect Domain Mappings
 
   - tags: [workbook, domain-map, feedback, github, ux]
@@ -123,6 +79,30 @@
 ## In Progress
 
 ## Done
+
+### ✅ 23 — Export All Connectors as CSV
+
+  - tags: [workbook, export, csv, ux]
+  - priority: low
+    ```md
+    Delivered the one-click connector export (Option A — native grid Export to Excel) with Domain/Subdomain visible per connector.
+
+    DELIVERED:
+    ✅ Extended the Tab 1 "List of all available Connectors" grid (query-AllConnectorsGrid) to project the full export column set: Connector Name, Vendor, Method, Solution, Domain, Subdomain, Status, Source Version, Connector ID.
+    ✅ Sorted by Domain, Subdomain, Connector Name so mis-bucketed / `Other` connectors cluster for QA.
+    ✅ Domain and Subdomain are now visible per connector directly in the grid.
+    ✅ Export = the grid's native "Export to Excel" toolbar action (.xlsx); the section header points users to it. No new grid, tab, or infra.
+    ✅ Documented in architecture.md §6.4 and docu.md §4.1; doc versions bumped to 2.7.
+
+    SCOPE NOTE:
+    - Implemented as one export button on the existing grid (per user request), not a separate full-catalog section/tab.
+    - The existing status filter (All/First/Third/Deprecated) still applies, so the export follows the current filter; default All exports the whole catalog.
+    - True .csv via the Function output stays deferred (Option B) until demand is proven.
+
+    INVENTORY DELTA:
+    - Added: none
+    - Removed: none
+    ```
 
 ### ✅ 22 — Document Installed-Connector Detection and Key Normalization
 

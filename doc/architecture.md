@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Architecture
 
-Version: 2.6
-Updated: 2026-06-22
+Version: 2.7
+Updated: 2026-07-06
 
 ---
 
@@ -285,7 +285,7 @@ Dynamic categorization behavior:
 
 Use this checklist when new connectors appear (typically surfacing as `Domain = Other` after a refresh) or when the upstream taxonomy changes.
 
-1. Identify uncategorized connectors. After a refresh, filter the Con watchlist (or workbook Tab 1) for `Domain = Other` to see what needs curation.
+1. Identify uncategorized connectors. After a refresh, filter the Con watchlist (or workbook Tab 1) for `Domain = Other` to see what needs curation. For bulk review, use the Export to Excel action on the Tab 1 connector grid to download the whole catalog (each row includes the connector's Domain and Subdomain) and sort/filter offline in Excel.
 2. Choose the correct domain/subdomain. Reuse an existing `"Domain / Subdomain"` key when possible; only introduce a new key when a genuinely new taxonomy branch is required.
 3. Add a match pattern. Insert the most specific stable fragment of the connector/vendor name into the matching key's array in func-watchlist-parser/ParseConnectors/domain-map.json. Patterns are case-insensitive substrings, so prefer a distinctive vendor/product token (for example `"Cyera DSPM"`) over a generic word.
 4. For cross-cutting connectors, add the pattern under `_multiDomain` with comma-separated `"Domain / Subdomain"` pairs instead of a normal key.
