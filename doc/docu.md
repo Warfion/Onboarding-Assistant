@@ -1,7 +1,7 @@
 # Sentinel Data Source Onboarding Assistant — Documentation
 
-Version: 2.7
-Last Updated: 2026-07-06
+Version: 2.8
+Last Updated: 2026-07-13
 Workbook File: Onboarding Assistant.workbook
 
 ---
@@ -75,7 +75,7 @@ Main behaviors:
 - Workspace picker is scoped to Sentinel-enabled workspaces in the selected subscription, and auto-selects when exactly one workspace is available
 - Workbook tabs are blocked when workspace eligibility is not satisfied; an onboarding guard message instructs users to run refresh initialization
 - Publisher and method pie charts summarize active catalog state
-- Full grid supports a status-based filter (All, First Party, Third Party, Deprecated) and lists each connector's Domain and Subdomain; the grid's native Export to Excel action downloads the full catalog (Connector Name, Vendor, Method, Solution, Domain, Subdomain, Status, Source Version, Connector ID) for offline domain-mapping QA
+- Full grid supports a status-based filter (All, First Party, Third Party, Deprecated) and lists each connector's Domain and Subdomain; an **Open connector catalog in Logs** button (below the grid) opens Log Analytics with a ready-to-run KQL query so the full catalog (Connector Name, Vendor, Method, Solution, Domain, Subdomain, Status, Source Version, Connector ID) can be exported via Logs → Export (CSV / Excel) for offline domain-mapping QA
 
 ### 4.2 Tab 2 — Alternative Ingestion Methods
 
@@ -248,7 +248,7 @@ This keeps workbook JSON maintainable and traceable during future edits.
 | Workbook deployment scope aligned to Sentinel discoverability (workspace RG) | Complete |
 | Reset-flow consolidation and split-RG cleanup targeting | Complete |
 | Workbook metadata query hardening for workspace-not-ready state | Complete |
-| Connector catalog export (Tab 1 grid Export to Excel incl. Domain/Subdomain) | Complete |
+| Connector catalog export (Tab 1 Open-in-Logs button + KQL, export via Logs incl. Domain/Subdomain) | Complete |
 | Reset script PID variable collision fix | Complete |
 | Function test suite | 47 passing |
 | Public GitHub packaging and one-click deploy documentation | Complete |
